@@ -43,7 +43,7 @@ def test_create_item_flow():
             "/items/new",
             data={
                 "item_type": "Laptop",
-                "inventory_number": "INV-001",
+                "service_tag": "ST-001",
                 "hu_number": "HU-001",
                 "serial_number": "SER-001",
                 "brand_model": "Dell Latitude 5420",
@@ -57,10 +57,10 @@ def test_create_item_flow():
 
     assert response.status_code == 200
     assert b"Item created." in response.data
-    assert b"INV-001" in response.data
+    assert b"ST-001" in response.data
 
     with app.app_context():
-        item = db_session.query(Item).filter_by(inventory_number="INV-001").one()
+        item = db_session.query(Item).filter_by(service_tag="ST-001").one()
         assert item.item_type == "Laptop"
         assert item.status == ItemStatus.IN_STORAGE
         assert item.audit_entries[-1].event_type == AuditEventType.ITEM_CREATED
@@ -73,7 +73,7 @@ def test_duplicate_identifiers_are_rejected():
         db_session.add(
             Item(
                 item_type="Monitor",
-                inventory_number="INV-001",
+                service_tag="ST-001",
                 hu_number="HU-001",
                 status=ItemStatus.IN_STORAGE,
             )
@@ -86,14 +86,14 @@ def test_duplicate_identifiers_are_rejected():
             "/items/new",
             data={
                 "item_type": "Keyboard",
-                "inventory_number": "INV-001",
+                "service_tag": "ST-001",
                 "hu_number": "HU-001",
                 "status": "in storage",
             },
         )
 
     assert response.status_code == 400
-    assert b"Inventory number must be unique." in response.data
+    assert b"Service tag must be unique." in response.data
     assert b"HU number must be unique." in response.data
 
 
@@ -103,7 +103,7 @@ def test_edit_item_updates_fields_and_audit():
     with app.app_context():
         item = Item(
             item_type="Monitor",
-            inventory_number="INV-200",
+            service_tag="ST-200",
             hu_number="HU-200",
             status=ItemStatus.IN_STORAGE,
         )
@@ -117,7 +117,7 @@ def test_edit_item_updates_fields_and_audit():
             f"/items/{item_id}/edit",
             data={
                 "item_type": "Monitor",
-                "inventory_number": "INV-200",
+                "service_tag": "ST-200",
                 "hu_number": "HU-200",
                 "serial_number": "SER-200",
                 "brand_model": "Dell U2720Q",

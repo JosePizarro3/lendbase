@@ -22,7 +22,7 @@ def parse_optional_date(raw_value: str) -> date | None:
 def serialize_item_snapshot(item: Item) -> dict[str, str | None]:
     return {
         "item_type": item.item_type,
-        "inventory_number": item.inventory_number,
+        "service_tag": item.service_tag,
         "hu_number": item.hu_number,
         "serial_number": item.serial_number,
         "brand_model": item.brand_model,
@@ -36,7 +36,7 @@ def serialize_item_snapshot(item: Item) -> dict[str, str | None]:
 def build_item_form_data(form_data) -> dict[str, str]:
     return {
         "item_type": form_data.get("item_type", "").strip(),
-        "inventory_number": form_data.get("inventory_number", "").strip(),
+        "service_tag": form_data.get("service_tag", "").strip(),
         "hu_number": form_data.get("hu_number", "").strip(),
         "serial_number": form_data.get("serial_number", "").strip(),
         "brand_model": form_data.get("brand_model", "").strip(),
@@ -52,8 +52,8 @@ def validate_item_form(form_data: dict[str, str], current_item_id: int | None = 
 
     if not form_data["item_type"]:
         errors.append("Item type is required.")
-    if not form_data["inventory_number"]:
-        errors.append("Inventory number is required.")
+    if not form_data["service_tag"]:
+        errors.append("Service tag is required.")
     if not form_data["hu_number"]:
         errors.append("HU number is required.")
 
@@ -69,15 +69,15 @@ def validate_item_form(form_data: dict[str, str], current_item_id: int | None = 
             errors.append(f"{field_name.replace('_', ' ').title()} must use YYYY-MM-DD format.")
 
     uniqueness_filters = or_(
-        Item.inventory_number == form_data["inventory_number"],
+        Item.service_tag == form_data["service_tag"],
         Item.hu_number == form_data["hu_number"],
     )
     existing_items = db_session.scalars(select(Item).where(uniqueness_filters)).all()
     for existing_item in existing_items:
         if current_item_id is not None and existing_item.id == current_item_id:
             continue
-        if existing_item.inventory_number == form_data["inventory_number"]:
-            errors.append("Inventory number must be unique.")
+        if existing_item.service_tag == form_data["service_tag"]:
+            errors.append("Service tag must be unique.")
         if existing_item.hu_number == form_data["hu_number"]:
             errors.append("HU number must be unique.")
 
@@ -86,7 +86,7 @@ def validate_item_form(form_data: dict[str, str], current_item_id: int | None = 
 
 def apply_item_form(item: Item, form_data: dict[str, str]) -> None:
     item.item_type = form_data["item_type"]
-    item.inventory_number = form_data["inventory_number"]
+    item.service_tag = form_data["service_tag"]
     item.hu_number = form_data["hu_number"]
     item.serial_number = form_data["serial_number"] or None
     item.brand_model = form_data["brand_model"] or None
@@ -96,7 +96,9 @@ def apply_item_form(item: Item, form_data: dict[str, str]) -> None:
     item.notes = form_data["notes"] or None
 
 
-def create_audit_entry(item: Item, event_type: AuditEventType, message: str, details: dict | None) -> None:
+def create_audit_entry(
+    item: Item, event_type: AuditEventType, message: str, details: dict | None
+) -> None:
     db_session.add(
         AuditLogEntry(item=item, event_type=event_type, message=message, details=details or None)
     )

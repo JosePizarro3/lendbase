@@ -68,7 +68,7 @@ Project notes, implementation sequence, and working assumptions live here so
    - Status coordination with lending state
 
 6. `feature/06-search-filter-export`
-   - Search by inventory number, HU number, serial number
+   - Search by service tag, HU number, serial number
    - Filter by item type and status
    - "Currently lent out" view
    - CSV export
