@@ -95,12 +95,25 @@
 
     <article class="panel">
       <h3>Audit history</h3>
-      {% if item.audit_entries %}
-        <ul class="simple-list">
-          {% for entry in item.audit_entries %}
-            <li>{{ entry.event_at.strftime("%Y-%m-%d %H:%M") if entry.event_at else "-" }} | {{ entry.message }}</li>
+      {% if audit_history_entries %}
+        <div class="history-stack">
+          {% for entry in audit_history_entries %}
+            <article class="history-entry">
+              <div class="history-meta">
+                <span class="history-time">{{ entry.timestamp.strftime("%Y-%m-%d %H:%M") if entry.timestamp else "-" }}</span>
+                <span class="history-type">{{ entry.event_type }}</span>
+              </div>
+              <p class="history-message">{{ entry.message }}</p>
+              {% if entry.detail_lines %}
+                <ul class="history-details">
+                  {% for line in entry.detail_lines %}
+                    <li>{{ line }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </article>
           {% endfor %}
-        </ul>
+        </div>
       {% else %}
         <p>No audit entries yet.</p>
       {% endif %}

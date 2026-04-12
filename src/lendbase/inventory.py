@@ -112,6 +112,73 @@ def create_audit_entry(
     )
 
 
+def create_status_change_entry(
+    item: Item, before_status: ItemStatus, after_status: ItemStatus
+) -> None:
+    if before_status == after_status:
+        return
+    create_audit_entry(
+        item,
+        AuditEventType.STATUS_CHANGED,
+        f"Status changed from {before_status.value} to {after_status.value}.",
+        {"before_status": before_status.value, "after_status": after_status.value},
+    )
+
+
+def build_audit_history_entries(item: Item) -> list[dict[str, object]]:
+    history_entries: list[dict[str, object]] = []
+
+    for entry in item.audit_entries:
+        detail_lines: list[str] = []
+        details = entry.details or {}
+
+        if entry.event_type == AuditEventType.ITEM_EDITED:
+            before = details.get("before") or {}
+            after = details.get("after") or {}
+            for field_name, after_value in after.items():
+                before_value = before.get(field_name)
+                if before_value != after_value:
+                    detail_lines.append(
+                        f"{field_name.replace('_', ' ')}: {before_value or '-'} -> {after_value or '-'}"
+                    )
+        elif entry.event_type == AuditEventType.ITEM_CREATED:
+            after = details.get("after") or {}
+            for field_name, value in after.items():
+                if value:
+                    detail_lines.append(f"{field_name.replace('_', ' ')}: {value}")
+        elif entry.event_type == AuditEventType.STATUS_CHANGED:
+            detail_lines.append(
+                f"{details.get('before_status', '-')} -> {details.get('after_status', '-')}"
+            )
+        elif entry.event_type == AuditEventType.ITEM_LENT_OUT:
+            detail_lines.extend(
+                [
+                    f"borrower name: {details.get('borrower_name', '-')}",
+                    f"lent date: {details.get('lent_date', '-')}",
+                ]
+            )
+            if details.get("comments"):
+                detail_lines.append(f"comments: {details['comments']}")
+        elif entry.event_type == AuditEventType.ITEM_RETURNED:
+            detail_lines.extend(
+                [
+                    f"borrower name: {details.get('borrower_name', '-')}",
+                    f"return date: {details.get('return_date', '-')}",
+                ]
+            )
+
+        history_entries.append(
+            {
+                "timestamp": entry.event_at,
+                "event_type": entry.event_type.value,
+                "message": entry.message,
+                "detail_lines": detail_lines,
+            }
+        )
+
+    return history_entries
+
+
 def get_item_or_404(item_id: int) -> Item:
     item = db_session.get(Item, item_id)
     if item is None:
@@ -324,6 +391,7 @@ def item_detail(item_id: int):
         active_lending_record=get_active_lending_record(item),
         lending_form_data=build_lending_form_data({}),
         return_form_data=build_return_form_data({}),
+        audit_history_entries=build_audit_history_entries(item),
     )
 
 
@@ -362,6 +430,7 @@ def item_edit(item_id: int):
         )
 
     before_snapshot = serialize_item_snapshot(item)
+    previous_status = item.status
     apply_item_form(item, form_data)
     after_snapshot = serialize_item_snapshot(item)
     create_audit_entry(
@@ -370,6 +439,7 @@ def item_edit(item_id: int):
         "Item edited.",
         {"before": before_snapshot, "after": after_snapshot},
     )
+    create_status_change_entry(item, previous_status, item.status)
     db_session.commit()
     flash("Item updated.", "success")
     return redirect(url_for("inventory.item_detail", item_id=item.id))
@@ -424,8 +494,10 @@ def item_lend(item_id: int):
         lent_date=lent_date,
         comments=form_data["comments"] or None,
     )
+    previous_status = item.status
     item.status = ItemStatus.LENT_OUT
     db_session.add(lending_record)
+    create_status_change_entry(item, previous_status, item.status)
     create_audit_entry(
         item,
         AuditEventType.ITEM_LENT_OUT,
@@ -476,7 +548,9 @@ def item_return(item_id: int):
         )
 
     active_lending_record.return_date = return_date
+    previous_status = item.status
     item.status = ItemStatus.IN_STORAGE
+    create_status_change_entry(item, previous_status, item.status)
     create_audit_entry(
         item,
         AuditEventType.ITEM_RETURNED,

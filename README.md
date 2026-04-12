@@ -20,6 +20,7 @@ Schema extension guidance lives in
 - Item deletion from the detail page
 - Lending and return workflow with borrower/date tracking
 - Search, filtering, lent-out view, and CSV export
+- Clearer audit history with change details on the item page
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -187,13 +188,15 @@ GitHub Actions also runs:
 9. Open the `Currently lent out` quick view and confirm only lent items appear.
 10. Export the current filtered list to CSV and inspect the file contents.
 11. Lend an item and confirm borrower name, lent date, and comments appear on the detail page.
-12. Register the item return and confirm its status changes back to `in storage`.
-13. Delete an item from the detail page and confirm it disappears from `/items`.
-14. Log out and verify `/items` redirects to `/login`.
-15. Run the password reset command and confirm you can log in with the new password.
-16. Open `/health` and confirm it returns JSON with status `ok`.
-17. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-18. Change `.env` values and restart the app to confirm configuration is picked up.
+12. Confirm the audit history shows the lend event and the status change.
+13. Register the item return and confirm its status changes back to `in storage`.
+14. Confirm the audit history shows the return event and the status change.
+15. Delete an item from the detail page and confirm it disappears from `/items`.
+16. Log out and verify `/items` redirects to `/login`.
+17. Run the password reset command and confirm you can log in with the new password.
+18. Open `/health` and confirm it returns JSON with status `ok`.
+19. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+20. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 

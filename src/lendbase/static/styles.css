@@ -348,6 +348,54 @@ body {
   padding: 0.5rem 0;
 }
 
+.history-stack {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.history-entry {
+  padding: 1rem 1rem 0.9rem;
+  border: 1px solid rgba(216, 205, 180, 0.8);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.history-meta {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.history-time {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.history-type {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.1);
+  color: var(--accent-strong);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.history-message {
+  margin: 0;
+  font-weight: 600;
+}
+
+.history-details {
+  margin: 0.7rem 0 0;
+  padding-left: 1.2rem;
+  line-height: 1.65;
+}
+
 .compact {
   max-width: 30rem;
 }

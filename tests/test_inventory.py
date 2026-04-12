@@ -3,7 +3,14 @@ from datetime import date
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
 from lendbase.db import Base, db_session, get_engine
-from lendbase.models import AdminUser, AuditEventType, Item, ItemStatus, LendingRecord
+from lendbase.models import (
+    AdminUser,
+    AuditEventType,
+    AuditLogEntry,
+    Item,
+    ItemStatus,
+    LendingRecord,
+)
 from werkzeug.security import generate_password_hash
 
 
@@ -238,7 +245,9 @@ def test_edit_item_updates_fields_and_audit():
         item = db_session.get(Item, item_id)
         assert item.serial_number == "SER-200"
         assert item.status == ItemStatus.UNDER_REPAIR
-        assert item.audit_entries[-1].event_type == AuditEventType.ITEM_EDITED
+        event_types = [entry.event_type for entry in item.audit_entries]
+        assert AuditEventType.ITEM_EDITED in event_types
+        assert AuditEventType.STATUS_CHANGED in event_types
 
 
 def test_edit_item_form_loads_with_optional_empty_fields():
@@ -326,7 +335,9 @@ def test_lend_item_creates_lending_record_and_updates_status():
         lending_record = db_session.query(LendingRecord).filter_by(item_id=item_id).one()
         assert lending_record.borrower_name == "Alice Example"
         assert lending_record.comments == "Loaned for conference travel."
-        assert item.audit_entries[-1].event_type == AuditEventType.ITEM_LENT_OUT
+        event_types = [entry.event_type for entry in item.audit_entries]
+        assert AuditEventType.ITEM_LENT_OUT in event_types
+        assert AuditEventType.STATUS_CHANGED in event_types
 
 
 def test_return_item_closes_active_lending_record_and_resets_status():
@@ -368,4 +379,42 @@ def test_return_item_closes_active_lending_record_and_resets_status():
         assert item.status == ItemStatus.IN_STORAGE
         lending_record = db_session.query(LendingRecord).filter_by(item_id=item_id).one()
         assert lending_record.return_date == date(2026, 4, 14)
-        assert item.audit_entries[-1].event_type == AuditEventType.ITEM_RETURNED
+        event_types = [entry.event_type for entry in item.audit_entries]
+        assert AuditEventType.ITEM_RETURNED in event_types
+        assert AuditEventType.STATUS_CHANGED in event_types
+
+
+def test_item_detail_shows_audit_history_details():
+    app = create_test_app()
+
+    with app.app_context():
+        item = Item(
+            item_type="Laptop",
+            service_tag="ST-HISTORY",
+            hu_number="HU-HISTORY",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add(item)
+        db_session.flush()
+        db_session.add(
+            AuditLogEntry(
+                item=item,
+                event_type=AuditEventType.ITEM_EDITED,
+                message="Item edited.",
+                details={
+                    "before": {"brand_model": "Old Model", "notes": None},
+                    "after": {"brand_model": "New Model", "notes": "Updated note"},
+                },
+            )
+        )
+        db_session.commit()
+        item_id = item.id
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get(f"/items/{item_id}")
+
+    assert response.status_code == 200
+    assert b"Item edited." in response.data
+    assert b"brand model: Old Model -&gt; New Model" in response.data
+    assert b"notes: - -&gt; Updated note" in response.data

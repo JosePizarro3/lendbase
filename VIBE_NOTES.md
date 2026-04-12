@@ -32,6 +32,7 @@ Project notes, implementation sequence, and working assumptions live here so
 - Browser-backed item CRUD with notes informed by the workbook in `data/`
 - Browser-backed lending and return workflow on top of item detail pages
 - Search by service tag, HU number, and serial number plus CSV export of filtered results
+- Richer item-level audit history with readable change details
 - Pytest coverage for startup paths
 - GitHub Actions CI and pre-commit automation
 
