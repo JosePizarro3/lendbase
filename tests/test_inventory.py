@@ -138,3 +138,52 @@ def test_edit_item_updates_fields_and_audit():
         assert item.serial_number == "SER-200"
         assert item.status == ItemStatus.UNDER_REPAIR
         assert item.audit_entries[-1].event_type == AuditEventType.ITEM_EDITED
+
+
+def test_edit_item_form_loads_with_optional_empty_fields():
+    app = create_test_app()
+
+    with app.app_context():
+        item = Item(
+            item_type="Mouse",
+            service_tag="ST-EMPTY",
+            hu_number="HU-EMPTY",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add(item)
+        db_session.commit()
+        item_id = item.id
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get(f"/items/{item_id}/edit")
+
+    assert response.status_code == 200
+    assert b"Edit item" in response.data
+    assert b"ST-EMPTY" in response.data
+
+
+def test_delete_item_removes_it():
+    app = create_test_app()
+
+    with app.app_context():
+        item = Item(
+            item_type="Keyboard",
+            service_tag="ST-DELETE",
+            hu_number="HU-DELETE",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add(item)
+        db_session.commit()
+        item_id = item.id
+
+    with app.test_client() as client:
+        login(client)
+        response = client.post(f"/items/{item_id}/delete", follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Item deleted:" in response.data
+    assert b"ST-DELETE" in response.data
+
+    with app.app_context():
+        assert db_session.get(Item, item_id) is None

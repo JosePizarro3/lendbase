@@ -34,16 +34,22 @@ def serialize_item_snapshot(item: Item) -> dict[str, str | None]:
 
 
 def build_item_form_data(form_data) -> dict[str, str]:
+    def get_text(name: str, default: str = "") -> str:
+        value = form_data.get(name, default)
+        if value is None:
+            return default
+        return str(value).strip()
+
     return {
-        "item_type": form_data.get("item_type", "").strip(),
-        "service_tag": form_data.get("service_tag", "").strip(),
-        "hu_number": form_data.get("hu_number", "").strip(),
-        "serial_number": form_data.get("serial_number", "").strip(),
-        "brand_model": form_data.get("brand_model", "").strip(),
-        "purchase_date": form_data.get("purchase_date", "").strip(),
-        "warranty_end": form_data.get("warranty_end", "").strip(),
-        "status": form_data.get("status", ItemStatus.IN_STORAGE.value).strip(),
-        "notes": form_data.get("notes", "").strip(),
+        "item_type": get_text("item_type"),
+        "service_tag": get_text("service_tag"),
+        "hu_number": get_text("hu_number"),
+        "serial_number": get_text("serial_number"),
+        "brand_model": get_text("brand_model"),
+        "purchase_date": get_text("purchase_date"),
+        "warranty_end": get_text("warranty_end"),
+        "status": get_text("status", ItemStatus.IN_STORAGE.value),
+        "notes": get_text("notes"),
     }
 
 
@@ -218,3 +224,14 @@ def item_edit(item_id: int):
     db_session.commit()
     flash("Item updated.", "success")
     return redirect(url_for("inventory.item_detail", item_id=item.id))
+
+
+@inventory.post("/items/<int:item_id>/delete")
+@login_required
+def item_delete(item_id: int):
+    item = get_item_or_404(item_id)
+    item_label = f"{item.item_type} ({item.service_tag})"
+    db_session.delete(item)
+    db_session.commit()
+    flash(f"Item deleted: {item_label}.", "success")
+    return redirect(url_for("inventory.item_list"))

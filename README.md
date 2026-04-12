@@ -5,6 +5,9 @@ A simple internal inventory and lending app for a university admin team.
 Implementation notes, roadmap, and product decisions live in
 [VIBE_NOTES.md](D:\REPOS\lendbase\VIBE_NOTES.md:1).
 
+Schema extension guidance lives in
+[docs/SCHEMA.md](D:\REPOS\lendbase\docs\SCHEMA.md:1).
+
 ## What is currently in the repo
 
 - Installable Python package with `src/` layout
@@ -14,6 +17,7 @@ Implementation notes, roadmap, and product decisions live in
 - Alembic migration setup with an initial schema migration
 - Shared admin authentication with password hashing and session login
 - Browser-backed item list, create, detail, and edit pages
+- Item deletion from the detail page
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -31,6 +35,8 @@ src/lendbase/
   templates/        Server-rendered HTML templates
   static/           Minimal styling assets
 migrations/         Alembic configuration and migration scripts
+docs/
+  SCHEMA.md         Guide for extending item fields safely
 tests/
   test_app.py       Startup, configuration, and DB wiring tests
   test_auth.py      Authentication and bootstrap flow tests
@@ -174,11 +180,12 @@ GitHub Actions also runs:
 4. Open `/items` and create a first inventory item.
 5. Open the item detail page and confirm the metadata is shown.
 6. Edit the item and confirm the updated values persist.
-7. Log out and verify `/items` redirects to `/login`.
-8. Run the password reset command and confirm you can log in with the new password.
-9. Open `/health` and confirm it returns JSON with status `ok`.
-10. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-11. Change `.env` values and restart the app to confirm configuration is picked up.
+7. Delete an item from the detail page and confirm it disappears from `/items`.
+8. Log out and verify `/items` redirects to `/login`.
+9. Run the password reset command and confirm you can log in with the new password.
+10. Open `/health` and confirm it returns JSON with status `ok`.
+11. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+12. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
@@ -189,6 +196,7 @@ Common issues in this step:
   a valid SQLAlchemy URL.
 - If `/login` redirects to `/setup/admin`, the shared admin account has not been created yet.
 - If the password reset command says the admin user was not found, verify the username in the database and the selected `.env` database path.
+- If the edit page fails for an item with sparse metadata, verify you are on the latest branch revision with the optional-field form fix.
 - If `.env` changes are not visible, restart the Flask development server.
 - If `uv` is missing, install it from Astral and rerun `uv sync --extra dev`.
 - If you prefer not to activate the virtual environment, you can still run commands

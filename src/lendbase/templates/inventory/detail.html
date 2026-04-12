@@ -6,7 +6,7 @@
   <section class="page-header">
     <div>
       <p class="eyebrow">Inventory detail</p>
-      <h2>{{ item.item_type }} · {{ item.service_tag }}</h2>
+      <h2>{{ item.item_type }} | {{ item.service_tag }}</h2>
       <p class="lead compact">
         Core item metadata is editable now. Lending workflows and richer history interactions
         will land in the next branches, but the detail page already exposes the structure.
@@ -15,6 +15,9 @@
     <div class="action-row">
       <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Back to items</a>
       <a class="button" href="{{ url_for('inventory.item_edit', item_id=item.id) }}">Edit item</a>
+      <form action="{{ url_for('inventory.item_delete', item_id=item.id) }}" method="post" onsubmit="return confirm('Delete this item? This cannot be undone.');">
+        <button class="button button-danger" type="submit">Delete item</button>
+      </form>
     </div>
   </section>
 
@@ -25,10 +28,10 @@
         <div><dt>Item type</dt><dd>{{ item.item_type }}</dd></div>
         <div><dt>Service tag</dt><dd>{{ item.service_tag }}</dd></div>
         <div><dt>HU number</dt><dd>{{ item.hu_number }}</dd></div>
-        <div><dt>Serial number</dt><dd>{{ item.serial_number or "—" }}</dd></div>
-        <div><dt>Brand/model</dt><dd>{{ item.brand_model or "—" }}</dd></div>
-        <div><dt>Purchase date</dt><dd>{{ item.purchase_date or "—" }}</dd></div>
-        <div><dt>Warranty end</dt><dd>{{ item.warranty_end or "—" }}</dd></div>
+        <div><dt>Serial number</dt><dd>{{ item.serial_number or "-" }}</dd></div>
+        <div><dt>Brand/model</dt><dd>{{ item.brand_model or "-" }}</dd></div>
+        <div><dt>Purchase date</dt><dd>{{ item.purchase_date or "-" }}</dd></div>
+        <div><dt>Warranty end</dt><dd>{{ item.warranty_end or "-" }}</dd></div>
         <div><dt>Status</dt><dd><span class="status-pill status-{{ item.status.name|lower|replace('_', '-') }}">{{ item.status.value }}</span></dd></div>
       </dl>
     </article>
@@ -45,7 +48,7 @@
       {% if item.lending_records %}
         <ul class="simple-list">
           {% for lending in item.lending_records %}
-            <li>{{ lending.borrower_name }} · lent {{ lending.lent_date }}{% if lending.return_date %} · returned {{ lending.return_date }}{% endif %}</li>
+            <li>{{ lending.borrower_name }} | lent {{ lending.lent_date }}{% if lending.return_date %} | returned {{ lending.return_date }}{% endif %}</li>
           {% endfor %}
         </ul>
       {% else %}
@@ -58,7 +61,7 @@
       {% if item.audit_entries %}
         <ul class="simple-list">
           {% for entry in item.audit_entries %}
-            <li>{{ entry.event_at.strftime("%Y-%m-%d %H:%M") if entry.event_at else "—" }} · {{ entry.message }}</li>
+            <li>{{ entry.event_at.strftime("%Y-%m-%d %H:%M") if entry.event_at else "-" }} | {{ entry.message }}</li>
           {% endfor %}
         </ul>
       {% else %}
