@@ -7,7 +7,7 @@ from sqlalchemy import or_, select
 
 from lendbase.auth import login_required
 from lendbase.db import db_session
-from lendbase.models import AuditEventType, AuditLogEntry, Item, ItemStatus
+from lendbase.models import AuditEventType, AuditLogEntry, Item, ItemStatus, LendingRecord
 
 inventory = Blueprint("inventory", __name__)
 
@@ -117,6 +117,37 @@ def get_item_or_404(item_id: int) -> Item:
     return item
 
 
+def get_active_lending_record(item: Item) -> LendingRecord | None:
+    for lending_record in item.lending_records:
+        if lending_record.return_date is None:
+            return lending_record
+    return None
+
+
+def build_lending_form_data(form_data) -> dict[str, str]:
+    def get_text(name: str, default: str = "") -> str:
+        value = form_data.get(name, default)
+        if value is None:
+            return default
+        return str(value).strip()
+
+    return {
+        "borrower_name": get_text("borrower_name"),
+        "lent_date": get_text("lent_date", date.today().isoformat()),
+        "comments": get_text("comments"),
+    }
+
+
+def build_return_form_data(form_data) -> dict[str, str]:
+    def get_text(name: str, default: str = "") -> str:
+        value = form_data.get(name, default)
+        if value is None:
+            return default
+        return str(value).strip()
+
+    return {"return_date": get_text("return_date", date.today().isoformat())}
+
+
 @inventory.get("/items")
 @login_required
 def item_list():
@@ -175,7 +206,13 @@ def item_create():
 @login_required
 def item_detail(item_id: int):
     item = get_item_or_404(item_id)
-    return render_template("inventory/detail.html", item=item)
+    return render_template(
+        "inventory/detail.html",
+        item=item,
+        active_lending_record=get_active_lending_record(item),
+        lending_form_data=build_lending_form_data({}),
+        return_form_data=build_return_form_data({}),
+    )
 
 
 @inventory.route("/items/<int:item_id>/edit", methods=["GET", "POST"])
@@ -235,3 +272,108 @@ def item_delete(item_id: int):
     db_session.commit()
     flash(f"Item deleted: {item_label}.", "success")
     return redirect(url_for("inventory.item_list"))
+
+
+@inventory.post("/items/<int:item_id>/lend")
+@login_required
+def item_lend(item_id: int):
+    item = get_item_or_404(item_id)
+    active_lending_record = get_active_lending_record(item)
+    form_data = build_lending_form_data(request.form)
+
+    errors: list[str] = []
+    if active_lending_record is not None:
+        errors.append("Item is already lent out and must be returned before lending it again.")
+    if not form_data["borrower_name"]:
+        errors.append("Borrower name is required.")
+    try:
+        lent_date = date.fromisoformat(form_data["lent_date"])
+    except ValueError:
+        errors.append("Lent date must use YYYY-MM-DD format.")
+        lent_date = None
+
+    if errors:
+        for error in errors:
+            flash(error, "error")
+        return (
+            render_template(
+                "inventory/detail.html",
+                item=item,
+                active_lending_record=active_lending_record,
+                lending_form_data=form_data,
+                return_form_data=build_return_form_data({}),
+            ),
+            400,
+        )
+
+    lending_record = LendingRecord(
+        item=item,
+        borrower_name=form_data["borrower_name"],
+        lent_date=lent_date,
+        comments=form_data["comments"] or None,
+    )
+    item.status = ItemStatus.LENT_OUT
+    db_session.add(lending_record)
+    create_audit_entry(
+        item,
+        AuditEventType.ITEM_LENT_OUT,
+        "Item lent out.",
+        {
+            "borrower_name": lending_record.borrower_name,
+            "lent_date": lending_record.lent_date.isoformat(),
+            "comments": lending_record.comments,
+        },
+    )
+    db_session.commit()
+    flash("Item marked as lent out.", "success")
+    return redirect(url_for("inventory.item_detail", item_id=item.id))
+
+
+@inventory.post("/items/<int:item_id>/return")
+@login_required
+def item_return(item_id: int):
+    item = get_item_or_404(item_id)
+    active_lending_record = get_active_lending_record(item)
+    form_data = build_return_form_data(request.form)
+
+    errors: list[str] = []
+    if active_lending_record is None:
+        errors.append("Item is not currently lent out.")
+    try:
+        return_date = date.fromisoformat(form_data["return_date"])
+    except ValueError:
+        errors.append("Return date must use YYYY-MM-DD format.")
+        return_date = None
+
+    if active_lending_record is not None and return_date is not None:
+        if return_date < active_lending_record.lent_date:
+            errors.append("Return date cannot be earlier than the lent date.")
+
+    if errors:
+        for error in errors:
+            flash(error, "error")
+        return (
+            render_template(
+                "inventory/detail.html",
+                item=item,
+                active_lending_record=active_lending_record,
+                lending_form_data=build_lending_form_data({}),
+                return_form_data=form_data,
+            ),
+            400,
+        )
+
+    active_lending_record.return_date = return_date
+    item.status = ItemStatus.IN_STORAGE
+    create_audit_entry(
+        item,
+        AuditEventType.ITEM_RETURNED,
+        "Item returned.",
+        {
+            "borrower_name": active_lending_record.borrower_name,
+            "return_date": active_lending_record.return_date.isoformat(),
+        },
+    )
+    db_session.commit()
+    flash("Item marked as returned.", "success")
+    return redirect(url_for("inventory.item_detail", item_id=item.id))

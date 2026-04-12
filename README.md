@@ -18,6 +18,7 @@ Schema extension guidance lives in
 - Shared admin authentication with password hashing and session login
 - Browser-backed item list, create, detail, and edit pages
 - Item deletion from the detail page
+- Lending and return workflow with borrower/date tracking
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -180,12 +181,14 @@ GitHub Actions also runs:
 4. Open `/items` and create a first inventory item.
 5. Open the item detail page and confirm the metadata is shown.
 6. Edit the item and confirm the updated values persist.
-7. Delete an item from the detail page and confirm it disappears from `/items`.
-8. Log out and verify `/items` redirects to `/login`.
-9. Run the password reset command and confirm you can log in with the new password.
-10. Open `/health` and confirm it returns JSON with status `ok`.
-11. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-12. Change `.env` values and restart the app to confirm configuration is picked up.
+7. Lend an item and confirm borrower name, lent date, and comments appear on the detail page.
+8. Register the item return and confirm its status changes back to `in storage`.
+9. Delete an item from the detail page and confirm it disappears from `/items`.
+10. Log out and verify `/items` redirects to `/login`.
+11. Run the password reset command and confirm you can log in with the new password.
+12. Open `/health` and confirm it returns JSON with status `ok`.
+13. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+14. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
@@ -213,6 +216,13 @@ The existing workbook in `data/` was used to guide the item field mapping for th
 branch. Repeating core columns such as equipment, model, service tag, and HU inventory
 number map cleanly to the English UI fields, while any extra sheet-specific remarks are
 intended to land in `notes`.
+
+Lending is now handled directly in the app by storing:
+
+- borrower name
+- lent date
+- optional comments
+- return date when the item comes back
 
 ## QR codes
 
