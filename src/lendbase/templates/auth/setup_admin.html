@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}lendbase | Set Up Admin{% endblock %}
+
+{% block content %}
+  <section class="auth-card">
+    <p class="eyebrow">First-run setup</p>
+    <h2>Create the shared admin account</h2>
+    <p class="lead compact">
+      This route is available only until the first admin user is created.
+    </p>
+
+    <form class="auth-form" action="{{ url_for('auth.setup_admin') }}" method="post">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" value="{{ entered_username or '' }}" autocomplete="username" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" required>
+
+      <label for="password_confirm">Confirm password</label>
+      <input id="password_confirm" name="password_confirm" type="password" autocomplete="new-password" required>
+
+      <button class="button" type="submit">Create admin account</button>
+    </form>
+  </section>
+{% endblock %}

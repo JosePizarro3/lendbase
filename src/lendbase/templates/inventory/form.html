@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}lendbase | {{ form_title }}{% endblock %}
+
+{% block content %}
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Inventory</p>
+      <h2>{{ form_title }}</h2>
+      <p class="lead compact">{{ form_intro }}</p>
+    </div>
+    <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Back to items</a>
+  </section>
+
+  <section class="panel">
+    <form class="item-form" method="post">
+      <div class="form-grid">
+        <div>
+          <label for="item_type">Item type</label>
+          <input id="item_type" name="item_type" type="text" value="{{ form_data.item_type }}" required>
+        </div>
+        <div>
+          <label for="status">Status</label>
+          <select id="status" name="status" required>
+            {% for status in status_options %}
+              <option value="{{ status.value }}" {% if form_data.status == status.value %}selected{% endif %}>{{ status.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="service_tag">Service tag</label>
+          <input id="service_tag" name="service_tag" type="text" value="{{ form_data.service_tag }}" required>
+        </div>
+        <div>
+          <label for="hu_number">HU number</label>
+          <input id="hu_number" name="hu_number" type="text" value="{{ form_data.hu_number }}" required>
+        </div>
+        <div>
+          <label for="brand_model">Brand/model</label>
+          <input id="brand_model" name="brand_model" type="text" value="{{ form_data.brand_model }}">
+        </div>
+        <div>
+          <label for="serial_number">Serial number</label>
+          <input id="serial_number" name="serial_number" type="text" value="{{ form_data.serial_number }}">
+        </div>
+        <div>
+          <label for="purchase_date">Purchase date</label>
+          <input id="purchase_date" name="purchase_date" type="date" value="{{ form_data.purchase_date }}">
+        </div>
+        <div>
+          <label for="warranty_end">Warranty end</label>
+          <input id="warranty_end" name="warranty_end" type="date" value="{{ form_data.warranty_end }}">
+        </div>
+      </div>
+
+      <div class="form-stack">
+        <label for="notes">Notes</label>
+        <textarea id="notes" name="notes" rows="6" placeholder="Use notes for extra spreadsheet columns, condition remarks, storage hints, or context that does not fit the core schema.">{{ form_data.notes }}</textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="button" type="submit">{{ submit_label }}</button>
+        {% if item %}
+          <a class="button button-secondary" href="{{ url_for('inventory.item_detail', item_id=item.id) }}">Cancel</a>
+        {% else %}
+          <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Cancel</a>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+{% endblock %}

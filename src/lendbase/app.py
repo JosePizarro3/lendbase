@@ -5,19 +5,31 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask
 
+from lendbase.auth import auth, reset_admin_password_command
 from lendbase.config import BaseConfig, get_config
+from lendbase.db import init_db
+from lendbase.inventory import inventory
 from lendbase.web import web
 
 
 def create_app(config: BaseConfig | None = None) -> Flask:
     load_dotenv()
 
-    app = Flask(__name__, instance_relative_config=True)
+    project_root = Path(__file__).resolve().parents[2]
+    app = Flask(
+        __name__,
+        instance_path=str(project_root / "instance"),
+        instance_relative_config=True,
+    )
     app_config = config or get_config()
     app.config.update(app_config.as_flask_config())
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
+    init_db(app)
+    app.cli.add_command(reset_admin_password_command)
+    app.register_blueprint(auth)
+    app.register_blueprint(inventory)
     app.register_blueprint(web)
 
     return app
