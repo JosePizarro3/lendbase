@@ -19,6 +19,7 @@ Schema extension guidance lives in
 - Browser-backed item list, create, detail, and edit pages
 - Item deletion from the detail page
 - Lending and return workflow with borrower/date tracking
+- Search, filtering, lent-out view, and CSV export
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -181,14 +182,18 @@ GitHub Actions also runs:
 4. Open `/items` and create a first inventory item.
 5. Open the item detail page and confirm the metadata is shown.
 6. Edit the item and confirm the updated values persist.
-7. Lend an item and confirm borrower name, lent date, and comments appear on the detail page.
-8. Register the item return and confirm its status changes back to `in storage`.
-9. Delete an item from the detail page and confirm it disappears from `/items`.
-10. Log out and verify `/items` redirects to `/login`.
-11. Run the password reset command and confirm you can log in with the new password.
-12. Open `/health` and confirm it returns JSON with status `ok`.
-13. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-14. Change `.env` values and restart the app to confirm configuration is picked up.
+7. Use the search box with a service tag, HU number, or serial number and confirm the list narrows correctly.
+8. Filter by item type or status and confirm the table updates.
+9. Open the `Currently lent out` quick view and confirm only lent items appear.
+10. Export the current filtered list to CSV and inspect the file contents.
+11. Lend an item and confirm borrower name, lent date, and comments appear on the detail page.
+12. Register the item return and confirm its status changes back to `in storage`.
+13. Delete an item from the detail page and confirm it disappears from `/items`.
+14. Log out and verify `/items` redirects to `/login`.
+15. Run the password reset command and confirm you can log in with the new password.
+16. Open `/health` and confirm it returns JSON with status `ok`.
+17. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+18. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
@@ -207,10 +212,13 @@ Common issues in this step:
 
 ## Export data
 
-Export is not implemented in this branch yet.
+CSV export is implemented from the item list page.
 
-CSV export is planned for `feature/06-search-filter-export`. Excel import remains a
-separate later migration task rather than a primary app UI feature.
+The export uses the current search/filter/view state, so you can narrow the list first
+and then export only the matching rows.
+
+Excel import remains a separate later migration task rather than a primary app UI
+feature.
 
 The existing workbook in `data/` was used to guide the item field mapping for this
 branch. Repeating core columns such as equipment, model, service tag, and HU inventory

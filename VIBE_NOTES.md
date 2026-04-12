@@ -31,6 +31,7 @@ Project notes, implementation sequence, and working assumptions live here so
 - Shared admin authentication with bootstrap-only account creation
 - Browser-backed item CRUD with notes informed by the workbook in `data/`
 - Browser-backed lending and return workflow on top of item detail pages
+- Search by service tag, HU number, and serial number plus CSV export of filtered results
 - Pytest coverage for startup paths
 - GitHub Actions CI and pre-commit automation
 

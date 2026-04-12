@@ -36,6 +36,105 @@ def test_item_list_requires_authentication():
     assert "/login?next=/items" in response.headers["Location"]
 
 
+def test_item_list_search_and_filter_work():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add_all(
+            [
+                Item(
+                    item_type="Laptop",
+                    service_tag="ST-FILTER-1",
+                    hu_number="HU-FILTER-1",
+                    serial_number="SER-A",
+                    status=ItemStatus.IN_STORAGE,
+                ),
+                Item(
+                    item_type="Monitor",
+                    service_tag="ST-FILTER-2",
+                    hu_number="HU-FILTER-2",
+                    serial_number="SER-B",
+                    status=ItemStatus.LENT_OUT,
+                ),
+            ]
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items?query=SER-B&status=lent+out")
+
+    assert response.status_code == 200
+    assert b"ST-FILTER-2" in response.data
+    assert b"ST-FILTER-1" not in response.data
+
+
+def test_item_list_lent_out_view_only_shows_lent_items():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add_all(
+            [
+                Item(
+                    item_type="Docking station",
+                    service_tag="ST-VIEW-1",
+                    hu_number="HU-VIEW-1",
+                    status=ItemStatus.IN_STORAGE,
+                ),
+                Item(
+                    item_type="Webcam",
+                    service_tag="ST-VIEW-2",
+                    hu_number="HU-VIEW-2",
+                    status=ItemStatus.LENT_OUT,
+                ),
+            ]
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items?view=lent_out")
+
+    assert response.status_code == 200
+    assert b"ST-VIEW-2" in response.data
+    assert b"ST-VIEW-1" not in response.data
+
+
+def test_item_export_returns_csv_for_filtered_items():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add_all(
+            [
+                Item(
+                    item_type="Keyboard",
+                    service_tag="ST-CSV-1",
+                    hu_number="HU-CSV-1",
+                    serial_number="CSV-ONE",
+                    status=ItemStatus.IN_STORAGE,
+                ),
+                Item(
+                    item_type="Keyboard",
+                    service_tag="ST-CSV-2",
+                    hu_number="HU-CSV-2",
+                    serial_number="CSV-TWO",
+                    status=ItemStatus.LENT_OUT,
+                ),
+            ]
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items/export?query=CSV-TWO")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/csv"
+    assert response.headers["Content-Disposition"] == 'attachment; filename="lendbase-items.csv"'
+    assert b"ST-CSV-2" in response.data
+    assert b"ST-CSV-1" not in response.data
+
+
 def test_create_item_flow():
     app = create_test_app()
 

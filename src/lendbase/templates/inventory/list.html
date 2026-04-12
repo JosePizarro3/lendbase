@@ -12,12 +12,55 @@
         browser-friendly internal app.
       </p>
     </div>
-    <a class="button" href="{{ url_for('inventory.item_create') }}">Add item</a>
+    <div class="action-row">
+      <a class="button button-secondary" href="{{ url_for('inventory.item_export', **filters) }}">Export CSV</a>
+      <a class="button" href="{{ url_for('inventory.item_create') }}">Add item</a>
+    </div>
+  </section>
+
+  <section class="panel">
+    <form class="item-form" method="get" action="{{ url_for('inventory.item_list') }}">
+      <div class="form-grid">
+        <div>
+          <label for="query">Search</label>
+          <input id="query" name="query" type="text" value="{{ filters.query }}" placeholder="Service tag, HU number, or serial number">
+        </div>
+        <div>
+          <label for="view">Quick view</label>
+          <select id="view" name="view">
+            <option value="" {% if not filters.view %}selected{% endif %}>All items</option>
+            <option value="lent_out" {% if filters.view == 'lent_out' %}selected{% endif %}>Currently lent out</option>
+          </select>
+        </div>
+        <div>
+          <label for="item_type">Item type</label>
+          <select id="item_type" name="item_type">
+            <option value="">All item types</option>
+            {% for item_type in item_type_options %}
+              <option value="{{ item_type }}" {% if filters.item_type == item_type %}selected{% endif %}>{{ item_type }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            <option value="">All statuses</option>
+            {% for status in status_options %}
+              <option value="{{ status.value }}" {% if filters.status == status.value %}selected{% endif %}>{{ status.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="button" type="submit">Apply filters</button>
+        <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Clear</a>
+      </div>
+    </form>
   </section>
 
   <section class="stats-grid">
     <article class="stat-card">
-      <span class="stat-label">Total items</span>
+      <span class="stat-label">Matching items</span>
       <strong class="stat-value">{{ items|length }}</strong>
     </article>
     <article class="stat-card">
@@ -50,8 +93,8 @@
                 <td><a class="table-link" href="{{ url_for('inventory.item_detail', item_id=item.id) }}">{{ item.item_type }}</a></td>
                 <td>{{ item.service_tag }}</td>
                 <td>{{ item.hu_number }}</td>
-                <td>{{ item.brand_model or "—" }}</td>
-                <td>{{ item.serial_number or "—" }}</td>
+                <td>{{ item.brand_model or "-" }}</td>
+                <td>{{ item.serial_number or "-" }}</td>
                 <td><span class="status-pill status-{{ item.status.name|lower|replace('_', '-') }}">{{ item.status.value }}</span></td>
               </tr>
             {% endfor %}
@@ -60,9 +103,12 @@
       </div>
     {% else %}
       <div class="empty-state">
-        <h3>No items yet</h3>
-        <p>Start by adding the first inventory record for a laptop, monitor, keyboard, or other equipment.</p>
-        <a class="button" href="{{ url_for('inventory.item_create') }}">Create the first item</a>
+        <h3>No matching items</h3>
+        <p>Try adjusting the search or filters, or create a new inventory record.</p>
+        <div class="form-actions">
+          <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Clear filters</a>
+          <a class="button" href="{{ url_for('inventory.item_create') }}">Create item</a>
+        </div>
       </div>
     {% endif %}
   </section>

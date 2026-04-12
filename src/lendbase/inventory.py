@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import csv
 from datetime import date
+from io import StringIO
 
-from flask import Blueprint, abort, flash, redirect, render_template, request, url_for
-from sqlalchemy import or_, select
+from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
+from sqlalchemy import and_, or_, select
 
 from lendbase.auth import login_required
 from lendbase.db import db_session
@@ -148,11 +150,121 @@ def build_return_form_data(form_data) -> dict[str, str]:
     return {"return_date": get_text("return_date", date.today().isoformat())}
 
 
+def build_list_filters(args) -> dict[str, str]:
+    return {
+        "query": args.get("query", "").strip(),
+        "item_type": args.get("item_type", "").strip(),
+        "status": args.get("status", "").strip(),
+        "view": args.get("view", "").strip(),
+    }
+
+
+def build_item_list_query(filters: dict[str, str]):
+    conditions = []
+
+    if filters["query"]:
+        search_term = f"%{filters['query']}%"
+        conditions.append(
+            or_(
+                Item.service_tag.ilike(search_term),
+                Item.hu_number.ilike(search_term),
+                Item.serial_number.ilike(search_term),
+            )
+        )
+
+    if filters["item_type"]:
+        conditions.append(Item.item_type == filters["item_type"])
+
+    if filters["status"]:
+        try:
+            conditions.append(Item.status == ItemStatus(filters["status"]))
+        except ValueError:
+            pass
+
+    if filters["view"] == "lent_out":
+        conditions.append(Item.status == ItemStatus.LENT_OUT)
+
+    query = select(Item)
+    if conditions:
+        query = query.where(and_(*conditions))
+    return query.order_by(Item.updated_at.desc(), Item.id.desc())
+
+
+def get_distinct_item_types() -> list[str]:
+    return list(
+        db_session.scalars(select(Item.item_type).distinct().order_by(Item.item_type.asc())).all()
+    )
+
+
+def export_items_csv(items: list[Item]) -> Response:
+    buffer = StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(
+        [
+            "item_type",
+            "service_tag",
+            "hu_number",
+            "serial_number",
+            "brand_model",
+            "purchase_date",
+            "warranty_end",
+            "status",
+            "notes",
+            "current_borrower",
+            "lent_date",
+            "return_date",
+        ]
+    )
+
+    for item in items:
+        active_lending_record = get_active_lending_record(item)
+        latest_lending_record = item.lending_records[0] if item.lending_records else None
+        writer.writerow(
+            [
+                item.item_type,
+                item.service_tag,
+                item.hu_number,
+                item.serial_number or "",
+                item.brand_model or "",
+                item.purchase_date.isoformat() if item.purchase_date else "",
+                item.warranty_end.isoformat() if item.warranty_end else "",
+                item.status.value,
+                item.notes or "",
+                active_lending_record.borrower_name if active_lending_record else "",
+                active_lending_record.lent_date.isoformat() if active_lending_record else "",
+                latest_lending_record.return_date.isoformat()
+                if latest_lending_record and latest_lending_record.return_date
+                else "",
+            ]
+        )
+
+    return Response(
+        buffer.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": 'attachment; filename="lendbase-items.csv"'},
+    )
+
+
 @inventory.get("/items")
 @login_required
 def item_list():
-    items = db_session.scalars(select(Item).order_by(Item.updated_at.desc(), Item.id.desc())).all()
-    return render_template("inventory/list.html", items=items)
+    filters = build_list_filters(request.args)
+    items = db_session.scalars(build_item_list_query(filters)).all()
+    return render_template(
+        "inventory/list.html",
+        items=items,
+        filters=filters,
+        item_type_options=get_distinct_item_types(),
+        status_options=list(ItemStatus),
+    )
+
+
+@inventory.get("/items/export")
+@login_required
+def item_export():
+    filters = build_list_filters(request.args)
+    items = db_session.scalars(build_item_list_query(filters)).all()
+    return export_items_csv(items)
 
 
 @inventory.route("/items/new", methods=["GET", "POST"])
