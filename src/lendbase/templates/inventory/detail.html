@@ -44,33 +44,6 @@
 
   <section class="detail-grid">
     <article class="panel">
-      <h3>QR code</h3>
-      <div class="qr-card">
-        <img class="qr-image" src="{{ qr_svg_url }}" alt="QR code for {{ item.service_tag }}">
-        <div class="qr-copy">
-          <p class="lead compact">
-            Scan or print this code to open the item detail page through the configured base URL.
-          </p>
-          <p><strong>Target URL:</strong><br><code>{{ item_detail_url }}</code></p>
-          <div class="form-actions">
-            <a class="button button-secondary" href="{{ qr_svg_url }}" target="_blank" rel="noreferrer">Open QR SVG</a>
-          </div>
-        </div>
-      </div>
-    </article>
-
-    <article class="panel">
-      <h3>Usage notes</h3>
-      <ul class="simple-list">
-        <li>The QR resolves using <code>LENDBASE_APP_BASE_URL</code>.</li>
-        <li>In local development, scanning typically redirects to the login page first, then to this item.</li>
-        <li>For a later production deployment, set the base URL to the institutional hostname.</li>
-      </ul>
-    </article>
-  </section>
-
-  <section class="detail-grid">
-    <article class="panel">
       <h3>Lending actions</h3>
       {% if active_lending_record %}
         <p class="lead compact">This item is currently lent to <strong>{{ active_lending_record.borrower_name }}</strong> since {{ active_lending_record.lent_date }}.</p>
@@ -119,7 +92,9 @@
         <p>No lending records yet.</p>
       {% endif %}
     </article>
+  </section>
 
+  <section class="detail-grid">
     <article class="panel">
       <h3>Audit history</h3>
       {% if audit_history_entries %}
@@ -144,6 +119,26 @@
       {% else %}
         <p>No audit entries yet.</p>
       {% endif %}
+    </article>
+
+    <article class="panel">
+      <h3>QR code</h3>
+      <div class="qr-card qr-card-stacked">
+        <a
+          class="qr-download-link"
+          href="{{ qr_png_url }}"
+          download="{{ item.service_tag|lower }}-qr.png"
+          title="Download QR code as PNG"
+        >
+          <img class="qr-image" src="{{ qr_svg_url }}" alt="QR code for {{ item.service_tag }}">
+        </a>
+        <div class="qr-copy">
+          <p class="lead compact">
+            Click the QR code to download a PNG for printing. Scanning it opens this item through the configured base URL.
+          </p>
+          <p><strong>Target URL:</strong><br><code>{{ item_detail_url }}</code></p>
+        </div>
+      </div>
     </article>
   </section>
 {% endblock %}

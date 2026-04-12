@@ -1,7 +1,7 @@
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
 from lendbase.db import get_engine, resolve_database_url
-from lendbase.qr import make_qr_svg
+from lendbase.qr import make_qr_png, make_qr_svg
 
 
 def test_homepage_requires_authentication():
@@ -55,3 +55,9 @@ def test_make_qr_svg_returns_svg_content():
 
     assert svg.startswith("<?xml")
     assert "<svg" in svg
+
+
+def test_make_qr_png_returns_png_content():
+    png = make_qr_png("http://localhost/items/1")
+
+    assert png.startswith(b"\x89PNG\r\n\x1a\n")

@@ -20,7 +20,7 @@ from sqlalchemy import and_, or_, select
 from lendbase.auth import login_required
 from lendbase.db import db_session
 from lendbase.models import AuditEventType, AuditLogEntry, Item, ItemStatus, LendingRecord
-from lendbase.qr import make_qr_svg
+from lendbase.qr import make_qr_png, make_qr_svg
 
 inventory = Blueprint("inventory", __name__)
 
@@ -329,6 +329,23 @@ def build_item_detail_url(item: Item) -> str:
     )
 
 
+def build_item_detail_context(
+    item: Item,
+    lending_form_data: dict[str, str] | None = None,
+    return_form_data: dict[str, str] | None = None,
+):
+    return {
+        "item": item,
+        "item_detail_url": build_item_detail_url(item),
+        "qr_svg_url": url_for("inventory.item_qr_svg", item_id=item.id),
+        "qr_png_url": url_for("inventory.item_qr_png", item_id=item.id),
+        "active_lending_record": get_active_lending_record(item),
+        "lending_form_data": lending_form_data or build_lending_form_data({}),
+        "return_form_data": return_form_data or build_return_form_data({}),
+        "audit_history_entries": build_audit_history_entries(item),
+    }
+
+
 @inventory.get("/items")
 @login_required
 def item_list():
@@ -402,16 +419,7 @@ def item_create():
 @login_required
 def item_detail(item_id: int):
     item = get_item_or_404(item_id)
-    return render_template(
-        "inventory/detail.html",
-        item=item,
-        item_detail_url=build_item_detail_url(item),
-        qr_svg_url=url_for("inventory.item_qr_svg", item_id=item.id),
-        active_lending_record=get_active_lending_record(item),
-        lending_form_data=build_lending_form_data({}),
-        return_form_data=build_return_form_data({}),
-        audit_history_entries=build_audit_history_entries(item),
-    )
+    return render_template("inventory/detail.html", **build_item_detail_context(item))
 
 
 @inventory.get("/items/<int:item_id>/qr.svg")
@@ -420,6 +428,19 @@ def item_qr_svg(item_id: int):
     item = get_item_or_404(item_id)
     svg = make_qr_svg(build_item_detail_url(item))
     return Response(svg, mimetype="image/svg+xml")
+
+
+@inventory.get("/items/<int:item_id>/qr.png")
+@login_required
+def item_qr_png(item_id: int):
+    item = get_item_or_404(item_id)
+    png = make_qr_png(build_item_detail_url(item))
+    filename = f"{item.service_tag.lower()}-qr.png"
+    return Response(
+        png,
+        mimetype="image/png",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @inventory.route("/items/<int:item_id>/edit", methods=["GET", "POST"])
@@ -507,10 +528,11 @@ def item_lend(item_id: int):
         return (
             render_template(
                 "inventory/detail.html",
-                item=item,
-                active_lending_record=active_lending_record,
-                lending_form_data=form_data,
-                return_form_data=build_return_form_data({}),
+                **build_item_detail_context(
+                    item,
+                    lending_form_data=form_data,
+                    return_form_data=build_return_form_data({}),
+                ),
             ),
             400,
         )
@@ -566,10 +588,11 @@ def item_return(item_id: int):
         return (
             render_template(
                 "inventory/detail.html",
-                item=item,
-                active_lending_record=active_lending_record,
-                lending_form_data=build_lending_form_data({}),
-                return_form_data=form_data,
+                **build_item_detail_context(
+                    item,
+                    lending_form_data=build_lending_form_data({}),
+                    return_form_data=form_data,
+                ),
             ),
             400,
         )

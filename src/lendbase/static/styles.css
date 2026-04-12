@@ -355,6 +355,16 @@ body {
   align-items: start;
 }
 
+.qr-card-stacked {
+  grid-template-columns: 1fr;
+  justify-items: start;
+}
+
+.qr-download-link {
+  display: inline-flex;
+  text-decoration: none;
+}
+
 .qr-image {
   width: 180px;
   height: 180px;
@@ -362,6 +372,17 @@ body {
   border: 1px solid rgba(216, 205, 180, 0.8);
   border-radius: 16px;
   background: #fff;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.qr-download-link:hover .qr-image,
+.qr-download-link:focus-visible .qr-image {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.4);
+  box-shadow: 0 12px 24px rgba(43, 36, 24, 0.12);
 }
 
 .qr-copy code {

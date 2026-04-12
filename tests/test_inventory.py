@@ -142,7 +142,7 @@ def test_item_export_returns_csv_for_filtered_items():
     assert b"ST-CSV-1" not in response.data
 
 
-def test_item_detail_shows_qr_target_url_and_svg_route():
+def test_item_detail_shows_qr_target_url_and_downloadable_png_route():
     app = create_test_app()
 
     with app.app_context():
@@ -160,12 +160,19 @@ def test_item_detail_shows_qr_target_url_and_svg_route():
         login(client)
         detail_response = client.get(f"/items/{item_id}")
         qr_response = client.get(f"/items/{item_id}/qr.svg")
+        qr_png_response = client.get(f"/items/{item_id}/qr.png")
 
     assert detail_response.status_code == 200
     assert b"http://localhost/items/" in detail_response.data
+    assert b"Usage notes" not in detail_response.data
+    assert b"Download QR code as PNG" in detail_response.data
     assert qr_response.status_code == 200
     assert qr_response.mimetype == "image/svg+xml"
     assert b"<svg" in qr_response.data
+    assert qr_png_response.status_code == 200
+    assert qr_png_response.mimetype == "image/png"
+    assert qr_png_response.headers["Content-Disposition"] == 'attachment; filename="st-qr-qr.png"'
+    assert qr_png_response.data.startswith(b"\x89PNG\r\n\x1a\n")
 
 
 def test_create_item_flow():
