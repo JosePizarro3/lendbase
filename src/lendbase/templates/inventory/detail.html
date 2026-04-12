@@ -124,19 +124,30 @@
     <article class="panel">
       <h3>QR code</h3>
       <div class="qr-card qr-card-stacked">
-        <a
-          class="qr-download-link"
-          href="{{ qr_png_url }}"
-          download="{{ item.service_tag|lower }}-qr.png"
-          title="Download QR code as PNG"
-        >
+        <a class="qr-download-link" href="{{ qr_svg_url }}" target="_blank" rel="noreferrer">
           <img class="qr-image" src="{{ qr_svg_url }}" alt="QR code for {{ item.service_tag }}">
         </a>
         <div class="qr-copy">
           <p class="lead compact">
-            Click the QR code to download a PNG for printing. Scanning it opens this item through the configured base URL.
+            Scan or print this code to open this item through the configured base URL. Download it in either SVG or PNG depending on how you want to print or reuse it.
           </p>
           <p><strong>Target URL:</strong><br><code>{{ item_detail_url }}</code></p>
+          <div class="form-actions">
+            <a
+              class="button button-secondary"
+              href="{{ qr_svg_url }}"
+              download="{{ item.service_tag|lower }}-qr.svg"
+            >
+              Download SVG
+            </a>
+            <a
+              class="button button-secondary"
+              href="{{ qr_png_url }}"
+              download="{{ item.service_tag|lower }}-qr.png"
+            >
+              Download PNG
+            </a>
+          </div>
         </div>
       </div>
     </article>

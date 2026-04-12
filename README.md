@@ -21,7 +21,7 @@ Schema extension guidance lives in
 - Lending and return workflow with borrower/date tracking
 - Search, filtering, lent-out view, and CSV export
 - Clearer audit history with change details on the item page
-- Item-level QR code generation with clickable PNG download
+- Item-level QR code generation with SVG and PNG download options
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -193,7 +193,7 @@ GitHub Actions also runs:
 13. Register the item return and confirm its status changes back to `in storage`.
 14. Confirm the audit history shows the return event and the status change.
 15. Open the item detail page QR section and confirm the QR image renders beside the audit history.
-16. Click the QR image and confirm the browser downloads a PNG file.
+16. Use the QR section buttons and confirm both SVG and PNG downloads work.
 17. Open the QR SVG directly and confirm it loads.
 18. Check that the displayed QR target URL matches `LENDBASE_APP_BASE_URL`.
 19. Delete an item from the detail page and confirm it disappears from `/items`.
@@ -249,8 +249,8 @@ The QR target URL is built from:
 - `LENDBASE_APP_BASE_URL`
 - the item detail path
 
-The page shows the QR as SVG for crisp in-browser display, and clicking the QR downloads
-it as PNG for printing or sharing with non-browser tools.
+The page shows the QR as SVG for crisp in-browser display and offers explicit download
+links for both SVG and PNG.
 
 In local development, this usually means:
 

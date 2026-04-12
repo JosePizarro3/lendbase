@@ -142,7 +142,7 @@ def test_item_export_returns_csv_for_filtered_items():
     assert b"ST-CSV-1" not in response.data
 
 
-def test_item_detail_shows_qr_target_url_and_downloadable_png_route():
+def test_item_detail_shows_qr_target_url_and_download_options():
     app = create_test_app()
 
     with app.app_context():
@@ -165,7 +165,8 @@ def test_item_detail_shows_qr_target_url_and_downloadable_png_route():
     assert detail_response.status_code == 200
     assert b"http://localhost/items/" in detail_response.data
     assert b"Usage notes" not in detail_response.data
-    assert b"Download QR code as PNG" in detail_response.data
+    assert b"Download SVG" in detail_response.data
+    assert b"Download PNG" in detail_response.data
     assert qr_response.status_code == 200
     assert qr_response.mimetype == "image/svg+xml"
     assert b"<svg" in qr_response.data
