@@ -79,7 +79,7 @@ def test_home_page_shows_inventory_summary_and_home_navigation():
     assert b"Home" in response.data
     assert b"Total items" in response.data
     assert b"Currently lent out" in response.data
-    assert b"Need attention" in response.data
+    assert b"Broken, lost, or under repair" in response.data
     assert b"Open items" in response.data
 
 

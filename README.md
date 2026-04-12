@@ -8,6 +8,9 @@ Implementation notes, roadmap, and product decisions live in
 Schema extension guidance lives in
 [docs/SCHEMA.md](D:\REPOS\lendbase\docs\SCHEMA.md:1).
 
+Production hardening guidance lives in
+[docs/PROD_READY.md](D:\REPOS\lendbase\docs\PROD_READY.md:1).
+
 ## What is currently in the repo
 
 - Installable Python package with `src/` layout
@@ -258,16 +261,5 @@ In local development, this usually means:
 Before a real deployment, set `LENDBASE_APP_BASE_URL` to the final internal hostname so
 printed codes resolve to the institution-facing URL.
 
-## Production readiness gaps
-
-This v1 is intentionally simple so the team can start using it quickly. Before an
-institutional production deployment, plan for the following:
-
-- Stronger authentication such as university SSO instead of one shared admin password
-- HTTPS and reverse proxy setup in front of Flask
-- Backup and restore procedures for the database
-- Better operational logging and broader audit coverage
-- Secret management outside a local `.env` file
-- A defined attachment storage strategy for future invoices, handover forms, or photos
-- Multi-user support with permissions and clearer ownership rules
-- Deployment, monitoring, upgrade, and maintenance procedures
+For deployment hardening and institutional next steps, see
+[docs/PROD_READY.md](D:\REPOS\lendbase\docs\PROD_READY.md:1).
