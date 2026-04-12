@@ -43,6 +43,46 @@ def test_item_list_requires_authentication():
     assert "/login?next=/items" in response.headers["Location"]
 
 
+def test_home_page_shows_inventory_summary_and_home_navigation():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add_all(
+            [
+                Item(
+                    item_type="Laptop",
+                    service_tag="ST-HOME-1",
+                    hu_number="HU-HOME-1",
+                    status=ItemStatus.IN_STORAGE,
+                ),
+                Item(
+                    item_type="Monitor",
+                    service_tag="ST-HOME-2",
+                    hu_number="HU-HOME-2",
+                    status=ItemStatus.LENT_OUT,
+                ),
+                Item(
+                    item_type="Dock",
+                    service_tag="ST-HOME-3",
+                    hu_number="HU-HOME-3",
+                    status=ItemStatus.UNDER_REPAIR,
+                ),
+            ]
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"Home" in response.data
+    assert b"Total items" in response.data
+    assert b"Currently lent out" in response.data
+    assert b"Need attention" in response.data
+    assert b"Open items" in response.data
+
+
 def test_item_list_search_and_filter_work():
     app = create_test_app()
 

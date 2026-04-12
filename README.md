@@ -12,7 +12,7 @@ Schema extension guidance lives in
 
 - Installable Python package with `src/` layout
 - Flask app factory and environment-aware configuration
-- Minimal home page and `/health` endpoint
+- Home page with inventory summary and quick actions plus `/health`
 - SQLAlchemy models for items, lending records, and audit history
 - Alembic migration setup with an initial schema migration
 - Shared admin authentication with password hashing and session login
@@ -87,14 +87,12 @@ Current environment variables:
 
 - `LENDBASE_ENV`: `development`, `testing`, or `production`
 - `LENDBASE_SECRET_KEY`: Flask session secret
-- `LENDBASE_DATABASE_URL`: placeholder database URL for upcoming database work
+- `LENDBASE_DATABASE_URL`: SQLAlchemy database URL
 - `LENDBASE_APP_BASE_URL`: base URL used later for links and QR generation
 
 Example local `.env` values are provided in [.env.example](D:\REPOS\lendbase\.env.example:1).
 
 ## Initialize the database
-
-Database initialization is not yet part of step 1.
 
 Initialize the local database with:
 
@@ -153,7 +151,7 @@ Run the current automated tests with:
 uv run pytest -p no:cacheprovider
 ```
 
-Current coverage is intentionally small and verifies:
+Current coverage verifies:
 
 - app factory startup
 - home page rendering
@@ -176,7 +174,7 @@ GitHub Actions also runs:
 - pytest
 - the same `uv`-based dependency sync used locally
 
-## Manual testing for this branch
+## Manual testing
 
 1. Start the app locally.
 2. Run `uv run alembic upgrade head`.
@@ -205,7 +203,7 @@ GitHub Actions also runs:
 
 ## Debugging tips
 
-Common issues in this step:
+Common issues:
 
 - Import errors usually mean dependencies were not installed with `uv sync --extra dev`.
 - If `uv run alembic upgrade head` fails, check that `LENDBASE_DATABASE_URL` is set to
@@ -259,3 +257,17 @@ In local development, this usually means:
 
 Before a real deployment, set `LENDBASE_APP_BASE_URL` to the final internal hostname so
 printed codes resolve to the institution-facing URL.
+
+## Production readiness gaps
+
+This v1 is intentionally simple so the team can start using it quickly. Before an
+institutional production deployment, plan for the following:
+
+- Stronger authentication such as university SSO instead of one shared admin password
+- HTTPS and reverse proxy setup in front of Flask
+- Backup and restore procedures for the database
+- Better operational logging and broader audit coverage
+- Secret management outside a local `.env` file
+- A defined attachment storage strategy for future invoices, handover forms, or photos
+- Multi-user support with permissions and clearer ownership rules
+- Deployment, monitoring, upgrade, and maintenance procedures

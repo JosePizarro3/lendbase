@@ -376,7 +376,7 @@ def item_create():
         return render_template(
             "inventory/form.html",
             form_title="Add item",
-            form_intro="Create a new inventory record using the core metadata from the equipment sheets.",
+            form_intro="Create a new inventory record with the key details needed for tracking and lending.",
             submit_label="Create item",
             form_data=form_data,
             status_options=list(ItemStatus),
@@ -391,7 +391,7 @@ def item_create():
             render_template(
                 "inventory/form.html",
                 form_title="Add item",
-                form_intro="Create a new inventory record using the core metadata from the equipment sheets.",
+                form_intro="Create a new inventory record with the key details needed for tracking and lending.",
                 submit_label="Create item",
                 form_data=form_data,
                 status_options=list(ItemStatus),
@@ -452,7 +452,7 @@ def item_edit(item_id: int):
         return render_template(
             "inventory/form.html",
             form_title="Edit item",
-            form_intro="Update the core inventory metadata. Any extra sheet-specific remarks can stay in notes.",
+            form_intro="Update the item details used for inventory tracking, lending, and reporting.",
             submit_label="Save changes",
             form_data=form_data,
             status_options=list(ItemStatus),
@@ -468,7 +468,7 @@ def item_edit(item_id: int):
             render_template(
                 "inventory/form.html",
                 form_title="Edit item",
-                form_intro="Update the core inventory metadata. Any extra sheet-specific remarks can stay in notes.",
+                form_intro="Update the item details used for inventory tracking, lending, and reporting.",
                 submit_label="Save changes",
                 form_data=form_data,
                 status_options=list(ItemStatus),
