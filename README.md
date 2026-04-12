@@ -3,16 +3,19 @@
 A simple internal inventory and lending app for a university admin team.
 
 Implementation notes, roadmap, and product decisions live in
-[VIBE_NOTES.md](D:\REPOS\lendbase\VIBE_NOTES.md:1).
+[VIBE_NOTES.md](VIBE_NOTES.md).
 
 Schema extension guidance lives in
-[docs/SCHEMA.md](D:\REPOS\lendbase\docs\SCHEMA.md:1).
+[docs/SCHEMA.md](docs/SCHEMA.md).
+
+Production hardening guidance lives in
+[docs/PROD_READY.md](docs/PROD_READY.md).
 
 ## What is currently in the repo
 
 - Installable Python package with `src/` layout
 - Flask app factory and environment-aware configuration
-- Minimal home page and `/health` endpoint
+- Home page with inventory summary and quick actions plus `/health`
 - SQLAlchemy models for items, lending records, and audit history
 - Alembic migration setup with an initial schema migration
 - Shared admin authentication with password hashing and session login
@@ -20,6 +23,8 @@ Schema extension guidance lives in
 - Item deletion from the detail page
 - Lending and return workflow with borrower/date tracking
 - Search, filtering, lent-out view, and CSV export
+- Clearer audit history with change details on the item page
+- Item-level QR code generation with SVG and PNG download options
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -85,14 +90,12 @@ Current environment variables:
 
 - `LENDBASE_ENV`: `development`, `testing`, or `production`
 - `LENDBASE_SECRET_KEY`: Flask session secret
-- `LENDBASE_DATABASE_URL`: placeholder database URL for upcoming database work
+- `LENDBASE_DATABASE_URL`: SQLAlchemy database URL
 - `LENDBASE_APP_BASE_URL`: base URL used later for links and QR generation
 
-Example local `.env` values are provided in [.env.example](D:\REPOS\lendbase\.env.example:1).
+Example local `.env` values are provided in [.env.example](.env.example).
 
 ## Initialize the database
-
-Database initialization is not yet part of step 1.
 
 Initialize the local database with:
 
@@ -151,7 +154,7 @@ Run the current automated tests with:
 uv run pytest -p no:cacheprovider
 ```
 
-Current coverage is intentionally small and verifies:
+Current coverage verifies:
 
 - app factory startup
 - home page rendering
@@ -174,7 +177,7 @@ GitHub Actions also runs:
 - pytest
 - the same `uv`-based dependency sync used locally
 
-## Manual testing for this branch
+## Manual testing
 
 1. Start the app locally.
 2. Run `uv run alembic upgrade head`.
@@ -187,17 +190,23 @@ GitHub Actions also runs:
 9. Open the `Currently lent out` quick view and confirm only lent items appear.
 10. Export the current filtered list to CSV and inspect the file contents.
 11. Lend an item and confirm borrower name, lent date, and comments appear on the detail page.
-12. Register the item return and confirm its status changes back to `in storage`.
-13. Delete an item from the detail page and confirm it disappears from `/items`.
-14. Log out and verify `/items` redirects to `/login`.
-15. Run the password reset command and confirm you can log in with the new password.
-16. Open `/health` and confirm it returns JSON with status `ok`.
-17. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-18. Change `.env` values and restart the app to confirm configuration is picked up.
+12. Confirm the audit history shows the lend event and the status change.
+13. Register the item return and confirm its status changes back to `in storage`.
+14. Confirm the audit history shows the return event and the status change.
+15. Open the item detail page QR section and confirm the QR image renders beside the audit history.
+16. Use the QR section buttons and confirm both SVG and PNG downloads work.
+17. Open the QR SVG directly and confirm it loads.
+18. Check that the displayed QR target URL matches `LENDBASE_APP_BASE_URL`.
+19. Delete an item from the detail page and confirm it disappears from `/items`.
+20. Log out and verify `/items` redirects to `/login`.
+21. Run the password reset command and confirm you can log in with the new password.
+22. Open `/health` and confirm it returns JSON with status `ok`.
+23. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+24. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
-Common issues in this step:
+Common issues:
 
 - Import errors usually mean dependencies were not installed with `uv sync --extra dev`.
 - If `uv run alembic upgrade head` fails, check that `LENDBASE_DATABASE_URL` is set to
@@ -234,7 +243,23 @@ Lending is now handled directly in the app by storing:
 
 ## QR codes
 
-QR generation is not implemented in this branch yet.
+QR generation is implemented on each item detail page.
 
-The scaffold already includes `LENDBASE_APP_BASE_URL` so later QR code generation can
-resolve stable item URLs in local development and in institutional deployments.
+The QR target URL is built from:
+
+- `LENDBASE_APP_BASE_URL`
+- the item detail path
+
+The page shows the QR as SVG for crisp in-browser display and offers explicit download
+links for both SVG and PNG.
+
+In local development, this usually means:
+
+- QR target like `http://127.0.0.1:5000/items/123`
+- scan leads to login first if no authenticated session exists
+
+Before a real deployment, set `LENDBASE_APP_BASE_URL` to the final internal hostname so
+printed codes resolve to the institution-facing URL.
+
+For deployment hardening and institutional next steps, see
+[docs/PROD_READY.md](docs/PROD_READY.md).
