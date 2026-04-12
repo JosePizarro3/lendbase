@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from datetime import date
 from io import StringIO
 
@@ -190,6 +191,28 @@ def build_audit_history_entries(item: Item) -> list[dict[str, object]]:
     return history_entries
 
 
+def build_audit_export_payload(item: Item) -> dict[str, object]:
+    entries = build_audit_history_entries(item)
+    return {
+        "item": {
+            "id": item.id,
+            "item_type": item.item_type,
+            "service_tag": item.service_tag,
+            "hu_number": item.hu_number,
+            "status": item.status.value,
+        },
+        "audit_entries": [
+            {
+                "timestamp": entry["timestamp"].isoformat() if entry["timestamp"] else None,
+                "event_type": entry["event_type"],
+                "message": entry["message"],
+                "details": entry["detail_lines"],
+            }
+            for entry in entries
+        ],
+    }
+
+
 def get_item_or_404(item_id: int) -> Item:
     item = db_session.get(Item, item_id)
     if item is None:
@@ -334,15 +357,19 @@ def build_item_detail_context(
     lending_form_data: dict[str, str] | None = None,
     return_form_data: dict[str, str] | None = None,
 ):
+    audit_history_entries = build_audit_history_entries(item)
     return {
         "item": item,
         "item_detail_url": build_item_detail_url(item),
         "qr_svg_url": url_for("inventory.item_qr_svg", item_id=item.id),
         "qr_png_url": url_for("inventory.item_qr_png", item_id=item.id),
+        "audit_export_url": url_for("inventory.item_audit_export", item_id=item.id),
         "active_lending_record": get_active_lending_record(item),
         "lending_form_data": lending_form_data or build_lending_form_data({}),
         "return_form_data": return_form_data or build_return_form_data({}),
-        "audit_history_entries": build_audit_history_entries(item),
+        "audit_history_entries": audit_history_entries,
+        "audit_preview_entries": audit_history_entries[:3],
+        "audit_remaining_entries": audit_history_entries[3:],
     }
 
 
@@ -439,6 +466,19 @@ def item_qr_png(item_id: int):
     return Response(
         png,
         mimetype="image/png",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@inventory.get("/items/<int:item_id>/audit.json")
+@login_required
+def item_audit_export(item_id: int):
+    item = get_item_or_404(item_id)
+    payload = build_audit_export_payload(item)
+    filename = f"{item.service_tag.lower()}-audit.json"
+    return Response(
+        json.dumps(payload, indent=2),
+        mimetype="application/json",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 

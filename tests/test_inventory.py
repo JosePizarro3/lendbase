@@ -492,3 +492,65 @@ def test_item_detail_shows_audit_history_details():
     assert b"Item edited." in response.data
     assert b"brand model: Old Model -&gt; New Model" in response.data
     assert b"notes: - -&gt; Updated note" in response.data
+
+
+def test_item_detail_limits_audit_preview_and_exports_json():
+    app = create_test_app()
+
+    with app.app_context():
+        item = Item(
+            item_type="Laptop",
+            service_tag="ST-AUDIT",
+            hu_number="HU-AUDIT",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add(item)
+        db_session.flush()
+        db_session.add_all(
+            [
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.ITEM_CREATED,
+                    message="Created 1",
+                    details={"after": {"service_tag": "ST-AUDIT"}},
+                ),
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.ITEM_EDITED,
+                    message="Edited 2",
+                    details={"before": {"notes": None}, "after": {"notes": "a"}},
+                ),
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.STATUS_CHANGED,
+                    message="Status 3",
+                    details={"before_status": "in storage", "after_status": "broken"},
+                ),
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.ITEM_RETURNED,
+                    message="Returned 4",
+                    details={"borrower_name": "Sam", "return_date": "2026-04-12"},
+                ),
+            ]
+        )
+        db_session.commit()
+        item_id = item.id
+
+    with app.test_client() as client:
+        login(client)
+        detail_response = client.get(f"/items/{item_id}")
+        export_response = client.get(f"/items/{item_id}/audit.json")
+
+    assert detail_response.status_code == 200
+    assert b"Export JSON" in detail_response.data
+    assert b"Show 1 older audit entry" in detail_response.data
+    assert detail_response.data.count(b"history-entry") == 4
+    assert export_response.status_code == 200
+    assert export_response.mimetype == "application/json"
+    assert (
+        export_response.headers["Content-Disposition"]
+        == 'attachment; filename="st-audit-audit.json"'
+    )
+    assert b'"service_tag": "ST-AUDIT"' in export_response.data
+    assert b'"message": "Returned 4"' in export_response.data
