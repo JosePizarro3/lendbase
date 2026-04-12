@@ -10,6 +10,8 @@ Implementation notes, roadmap, and product decisions live in
 - Installable Python package with `src/` layout
 - Flask app factory and environment-aware configuration
 - Minimal home page and `/health` endpoint
+- SQLAlchemy models for items, lending records, and audit history
+- Alembic migration setup with an initial schema migration
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -19,11 +21,14 @@ Implementation notes, roadmap, and product decisions live in
 src/lendbase/
   app.py            Flask app factory
   config.py         Environment-aware settings
+  db.py             Database engine/session setup
+  models.py         SQLAlchemy models
   web.py            Minimal web routes for the scaffold step
   templates/        Server-rendered HTML templates
   static/           Minimal styling assets
+migrations/         Alembic configuration and migration scripts
 tests/
-  test_app.py       Basic startup and health endpoint tests
+  test_app.py       Startup, configuration, and DB wiring tests
 ```
 
 ## Requirements
@@ -75,9 +80,14 @@ Example local `.env` values are provided in [.env.example](D:\REPOS\lendbase\.en
 
 Database initialization is not yet part of step 1.
 
-The scaffold already exposes `LENDBASE_DATABASE_URL` and creates the Flask instance
-directory so the next branch can add SQLAlchemy models and Alembic migrations without
-reworking the app setup.
+Initialize the local database with:
+
+```cmd
+uv run alembic upgrade head
+```
+
+For the default SQLite setup, the database file is created under the Flask instance
+directory as `instance/lendbase-dev.db`.
 
 ## Run locally
 
@@ -113,6 +123,7 @@ Current coverage is intentionally small and verifies:
 - app factory startup
 - home page rendering
 - health endpoint behavior
+- database wiring and SQLite path resolution
 
 ## Automated checks
 
@@ -127,19 +138,24 @@ GitHub Actions also runs:
 
 - pre-commit checks
 - pytest
+- the same `uv`-based dependency sync used locally
 
 ## Manual testing for this branch
 
 1. Start the app locally.
-2. Open the home page and confirm the scaffold page renders.
-3. Open `/health` and confirm it returns JSON with status `ok`.
-4. Change `.env` values and restart the app to confirm configuration is picked up.
+2. Run `uv run alembic upgrade head`.
+3. Open the home page and confirm the scaffold page renders.
+4. Open `/health` and confirm it returns JSON with status `ok`.
+5. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+6. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
 Common issues in this step:
 
 - Import errors usually mean dependencies were not installed with `uv sync --extra dev`.
+- If `uv run alembic upgrade head` fails, check that `LENDBASE_DATABASE_URL` is set to
+  a valid SQLAlchemy URL.
 - If `.env` changes are not visible, restart the Flask development server.
 - If `uv` is missing, install it from Astral and rerun `uv sync --extra dev`.
 - If you prefer not to activate the virtual environment, you can still run commands

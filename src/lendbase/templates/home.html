@@ -5,11 +5,11 @@
 {% block content %}
   <section class="hero">
     <div>
-      <p class="eyebrow">Step 1 scaffold</p>
+      <p class="eyebrow">Step 2 database foundation</p>
       <h2>Internal inventory management for a small university admin team</h2>
       <p class="lead">
-        This first branch sets up the app factory, environment-based configuration,
-        local development defaults, and a minimal browser UI.
+        The app now includes the initial SQLAlchemy schema and Alembic migration
+        setup for inventory items, lending records, and audit history.
       </p>
     </div>
     <dl class="summary-card">
@@ -33,7 +33,9 @@
     <ul>
       <li>Python project metadata and installable package layout</li>
       <li>Config separation for development, testing, and production</li>
-      <li>Placeholder database setting and instance directory creation</li>
+      <li>Database URL handling with local SQLite support under the Flask instance directory</li>
+      <li>Initial models for items, lending records, and audit history</li>
+      <li>Alembic migration setup and the first schema revision</li>
       <li>Health check endpoint at <code>/health</code></li>
       <li>Initial developer documentation for setup, run, test, and debugging</li>
     </ul>
@@ -42,8 +44,8 @@
   <section class="panel">
     <h3>What comes next</h3>
     <p>
-      The next branch adds SQLAlchemy models, Alembic migrations, and the initial
-      database schema for inventory items, lending events, and audit history.
+      The next branch adds shared-admin authentication with secure password hashing
+      and a simple session-based login flow.
     </p>
   </section>
 {% endblock %}

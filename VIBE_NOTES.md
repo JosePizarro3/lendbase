@@ -26,6 +26,8 @@ Project notes, implementation sequence, and working assumptions live here so
 - Flask app factory and configuration module
 - Development, testing, and production config classes
 - Minimal home page and `/health` endpoint
+- SQLAlchemy ORM models for core inventory, lending, and audit entities
+- Alembic migration setup with the initial schema
 - Pytest coverage for startup paths
 - GitHub Actions CI and pre-commit automation
 

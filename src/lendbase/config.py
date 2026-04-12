@@ -8,7 +8,7 @@ from dataclasses import dataclass
 class BaseConfig:
     app_name: str = "lendbase"
     secret_key: str = os.getenv("LENDBASE_SECRET_KEY", "dev-only-change-me")
-    database_url: str = os.getenv("LENDBASE_DATABASE_URL", "sqlite:///instance/lendbase-dev.db")
+    database_url: str = os.getenv("LENDBASE_DATABASE_URL", "sqlite:///lendbase-dev.db")
     app_base_url: str = os.getenv("LENDBASE_APP_BASE_URL", "http://127.0.0.1:5000")
     session_cookie_secure: bool = False
     testing: bool = False
@@ -18,6 +18,7 @@ class BaseConfig:
             "APP_NAME": self.app_name,
             "ENVIRONMENT_NAME": self.environment_name,
             "SECRET_KEY": self.secret_key,
+            "DATABASE_URL": self.database_url,
             "SQLALCHEMY_DATABASE_URI": self.database_url,
             "APP_BASE_URL": self.app_base_url.rstrip("/"),
             "SESSION_COOKIE_HTTPONLY": True,

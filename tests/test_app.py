@@ -1,5 +1,6 @@
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
+from lendbase.db import get_engine, resolve_database_url
 
 
 def test_homepage_loads():
@@ -24,3 +25,18 @@ def test_health_endpoint_returns_ok_status():
         "app": "lendbase",
         "database_url": "sqlite:///:memory:",
     }
+
+
+def test_database_engine_is_initialized():
+    app = create_app(AppTestingConfig())
+
+    with app.app_context():
+        engine = get_engine(app)
+
+    assert str(engine.url) == "sqlite:///:memory:"
+
+
+def test_relative_sqlite_database_url_uses_instance_path(tmp_path):
+    resolved = resolve_database_url("sqlite:///lendbase-dev.db", str(tmp_path))
+
+    assert resolved == f"sqlite:///{tmp_path.as_posix()}/lendbase-dev.db"
