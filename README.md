@@ -2,13 +2,11 @@
 
 A simple internal inventory and lending app for a university admin team.
 
-Implementation notes, roadmap, and product decisions live in
-[VIBE_NOTES.md](VIBE_NOTES.md).
-
-Schema extension guidance lives in
+* Implementation notes, roadmap, and product decisions live with Codex in
+[docs/VIBE_NOTES.md](docs/VIBE_NOTES.md).
+* Schema extension guidance lives in
 [docs/SCHEMA.md](docs/SCHEMA.md).
-
-Production hardening guidance lives in
+* Production hardening guidance lives in
 [docs/PROD_READY.md](docs/PROD_READY.md).
 
 ## What is currently in the repo
@@ -28,35 +26,13 @@ Production hardening guidance lives in
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
-## Repository layout
-
-```text
-src/lendbase/
-  app.py            Flask app factory
-  config.py         Environment-aware settings
-  db.py             Database engine/session setup
-  models.py         SQLAlchemy models
-  auth.py           Login, logout, and admin bootstrap flow
-  inventory.py      Item list/detail/create/edit routes and validation
-  web.py            Minimal web routes for the scaffold step
-  templates/        Server-rendered HTML templates
-  static/           Minimal styling assets
-migrations/         Alembic configuration and migration scripts
-docs/
-  SCHEMA.md         Guide for extending item fields safely
-tests/
-  test_app.py       Startup, configuration, and DB wiring tests
-  test_auth.py      Authentication and bootstrap flow tests
-  test_inventory.py Item CRUD tests
-```
-
 ## Requirements
 
 - Python 3.12 or newer
 - `uv` installed
 
-You can use `pip` instead if needed, but the project now includes `uv.lock` and the
-examples below use `uv`.
+You can use `pip` instead if needed, but the project includes `uv.lock` and the
+examples below use `uv` in Windows.
 
 ## Local setup
 
@@ -78,12 +54,6 @@ examples below use `uv`.
    uv sync --extra dev
    ```
 
-4. Create a local environment file:
-
-   ```cmd
-   copy .env.example .env
-   ```
-
 ## Environment configuration
 
 Current environment variables:
@@ -93,7 +63,10 @@ Current environment variables:
 - `LENDBASE_DATABASE_URL`: SQLAlchemy database URL
 - `LENDBASE_APP_BASE_URL`: base URL used later for links and QR generation
 
-Example local `.env` values are provided in [.env.example](.env.example).
+Example local `.env` values are provided in [.env.example](.env.example). You can simply create a local environment file by doing:
+```cmd
+copy .env.example .env
+```
 
 ## Initialize the database
 
@@ -103,8 +76,7 @@ Initialize the local database with:
 uv run alembic upgrade head
 ```
 
-For the default SQLite setup, the database file is created under the Flask instance
-directory as `instance/lendbase-dev.db`.
+For the default SQLite setup, the database file is created under the project directory as `instance/lendbase-dev.db`.
 
 ## Run locally
 
@@ -122,7 +94,7 @@ Then open:
 
 ## Login
 
-Authentication is now implemented as a simple shared-admin flow.
+Authentication is implemented as a simple shared-admin flow. 
 
 First-time setup:
 
@@ -131,20 +103,17 @@ First-time setup:
 3. Create the shared admin username and password
 4. Use those credentials on `http://127.0.0.1:5000/login`
 
-Notes:
+<!-- Notes:
 
 - Passwords are stored as secure hashes, not plaintext
 - The bootstrap route is disabled after the first admin account is created
-- Browser-facing app routes require a logged-in admin session
+- Browser-facing app routes require a logged-in admin session -->
 
-Resetting the shared admin password:
+With the admin credentials, you can reset the shared admin password:
 
 ```cmd
 python -m flask --app lendbase.app:create_app reset-admin-password --username your-admin-name
 ```
-
-The command prompts for the new password and confirmation without echoing the password
-back to the terminal.
 
 ## Test instructions
 
@@ -209,15 +178,13 @@ GitHub Actions also runs:
 Common issues:
 
 - Import errors usually mean dependencies were not installed with `uv sync --extra dev`.
-- If `uv run alembic upgrade head` fails, check that `LENDBASE_DATABASE_URL` is set to
-  a valid SQLAlchemy URL.
+- If `uv run alembic upgrade head` fails, check that `LENDBASE_DATABASE_URL` is set to a valid SQLAlchemy URL.
 - If `/login` redirects to `/setup/admin`, the shared admin account has not been created yet.
 - If the password reset command says the admin user was not found, verify the username in the database and the selected `.env` database path.
 - If the edit page fails for an item with sparse metadata, verify you are on the latest branch revision with the optional-field form fix.
 - If `.env` changes are not visible, restart the Flask development server.
 - If `uv` is missing, install it from Astral and rerun `uv sync --extra dev`.
-- If you prefer not to activate the virtual environment, you can still run commands
-  through `uv run`.
+- If you prefer not to activate the virtual environment, you can still run commands through `uv run`.
 
 ## Export data
 
@@ -229,12 +196,7 @@ and then export only the matching rows.
 Excel import remains a separate later migration task rather than a primary app UI
 feature.
 
-The existing workbook in `data/` was used to guide the item field mapping for this
-branch. Repeating core columns such as equipment, model, service tag, and HU inventory
-number map cleanly to the English UI fields, while any extra sheet-specific remarks are
-intended to land in `notes`.
-
-Lending is now handled directly in the app by storing:
+Lending is handled directly in the app by storing:
 
 - borrower name
 - lent date
@@ -260,6 +222,3 @@ In local development, this usually means:
 
 Before a real deployment, set `LENDBASE_APP_BASE_URL` to the final internal hostname so
 printed codes resolve to the institution-facing URL.
-
-For deployment hardening and institutional next steps, see
-[docs/PROD_READY.md](docs/PROD_READY.md).

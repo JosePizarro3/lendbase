@@ -7,10 +7,11 @@ name = "lendbase"
 version = "0.1.0"
 description = "Internal inventory and lending app for a university admin team."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [
-  { name = "HU Berlin admin tooling team" }
+  { name = "Aysin N. Günes", email = "naz.guenes.pizarro@physik.hu-berlin.de" },
+  { name = "Jose M. Pizarro", email = "jose.pizarro-blanco@bam.de" },
 ]
 dependencies = [
   "SQLAlchemy>=2.0,<3.0",
