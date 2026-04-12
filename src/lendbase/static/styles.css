@@ -253,6 +253,16 @@ body {
   letter-spacing: 0.08em;
 }
 
+.table-sort-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.table-sort-link:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
 .table-link {
   color: var(--accent-strong);
   text-decoration: none;
@@ -321,6 +331,12 @@ body {
   flex-wrap: wrap;
 }
 
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.9rem;
+}
+
 .detail-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -348,9 +364,56 @@ body {
   padding: 0.5rem 0;
 }
 
+.qr-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.qr-card-stacked {
+  grid-template-columns: 1fr;
+  justify-items: start;
+}
+
+.qr-download-link {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.qr-image {
+  width: 180px;
+  height: 180px;
+  padding: 0.75rem;
+  border: 1px solid rgba(216, 205, 180, 0.8);
+  border-radius: 16px;
+  background: #fff;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    border-color 140ms ease;
+}
+
+.qr-download-link:hover .qr-image,
+.qr-download-link:focus-visible .qr-image {
+  transform: translateY(-2px);
+  border-color: rgba(15, 118, 110, 0.4);
+  box-shadow: 0 12px 24px rgba(43, 36, 24, 0.12);
+}
+
+.qr-copy code {
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-all;
+}
+
 .history-stack {
   display: grid;
   gap: 0.9rem;
+}
+
+.history-stack-nested {
+  margin-top: 0.9rem;
 }
 
 .history-entry {
@@ -394,6 +457,19 @@ body {
   margin: 0.7rem 0 0;
   padding-left: 1.2rem;
   line-height: 1.65;
+}
+
+.history-more {
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(216, 205, 180, 0.8);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.history-more summary {
+  cursor: pointer;
+  color: var(--accent-strong);
+  font-weight: 600;
 }
 
 .compact {
@@ -444,6 +520,10 @@ code {
   .detail-grid,
   .form-grid,
   .detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-card {
     grid-template-columns: 1fr;
   }
 }

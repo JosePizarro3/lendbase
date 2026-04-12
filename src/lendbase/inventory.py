@@ -1,15 +1,27 @@
 from __future__ import annotations
 
 import csv
+import json
 from datetime import date
 from io import StringIO
 
-from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from sqlalchemy import and_, or_, select
 
 from lendbase.auth import login_required
 from lendbase.db import db_session
 from lendbase.models import AuditEventType, AuditLogEntry, Item, ItemStatus, LendingRecord
+from lendbase.qr import make_qr_png, make_qr_svg
 
 inventory = Blueprint("inventory", __name__)
 
@@ -179,6 +191,28 @@ def build_audit_history_entries(item: Item) -> list[dict[str, object]]:
     return history_entries
 
 
+def build_audit_export_payload(item: Item) -> dict[str, object]:
+    entries = build_audit_history_entries(item)
+    return {
+        "item": {
+            "id": item.id,
+            "item_type": item.item_type,
+            "service_tag": item.service_tag,
+            "hu_number": item.hu_number,
+            "status": item.status.value,
+        },
+        "audit_entries": [
+            {
+                "timestamp": entry["timestamp"].isoformat() if entry["timestamp"] else None,
+                "event_type": entry["event_type"],
+                "message": entry["message"],
+                "details": entry["detail_lines"],
+            }
+            for entry in entries
+        ],
+    }
+
+
 def get_item_or_404(item_id: int) -> Item:
     item = db_session.get(Item, item_id)
     if item is None:
@@ -223,6 +257,8 @@ def build_list_filters(args) -> dict[str, str]:
         "item_type": args.get("item_type", "").strip(),
         "status": args.get("status", "").strip(),
         "view": args.get("view", "").strip(),
+        "sort": args.get("sort", "updated_at").strip(),
+        "direction": args.get("direction", "desc").strip().lower(),
     }
 
 
@@ -254,7 +290,38 @@ def build_item_list_query(filters: dict[str, str]):
     query = select(Item)
     if conditions:
         query = query.where(and_(*conditions))
+
+    sort_key = filters.get("sort", "updated_at")
+    direction = filters.get("direction", "desc")
+    is_desc = direction != "asc"
+
+    if sort_key == "updated_at":
+        primary_order = Item.updated_at.desc() if is_desc else Item.updated_at.asc()
+        secondary_order = Item.id.desc() if is_desc else Item.id.asc()
+        return query.order_by(primary_order, secondary_order)
+
     return query.order_by(Item.updated_at.desc(), Item.id.desc())
+
+
+def build_sort_link(filters: dict[str, str], sort_key: str) -> dict[str, str]:
+    next_direction = "asc"
+    if filters.get("sort") == sort_key and filters.get("direction") == "asc":
+        next_direction = "desc"
+
+    return {
+        "query": filters.get("query", ""),
+        "item_type": filters.get("item_type", ""),
+        "status": filters.get("status", ""),
+        "view": filters.get("view", ""),
+        "sort": sort_key,
+        "direction": next_direction,
+    }
+
+
+def get_sort_indicator(filters: dict[str, str], sort_key: str) -> str:
+    if filters.get("sort") != sort_key:
+        return ""
+    return "↑" if filters.get("direction") == "asc" else "↓"
 
 
 def get_distinct_item_types() -> list[str]:
@@ -312,6 +379,33 @@ def export_items_csv(items: list[Item]) -> Response:
     )
 
 
+def build_item_detail_url(item: Item) -> str:
+    return (
+        f"{current_app.config['APP_BASE_URL']}{url_for('inventory.item_detail', item_id=item.id)}"
+    )
+
+
+def build_item_detail_context(
+    item: Item,
+    lending_form_data: dict[str, str] | None = None,
+    return_form_data: dict[str, str] | None = None,
+):
+    audit_history_entries = build_audit_history_entries(item)
+    return {
+        "item": item,
+        "item_detail_url": build_item_detail_url(item),
+        "qr_svg_url": url_for("inventory.item_qr_svg", item_id=item.id),
+        "qr_png_url": url_for("inventory.item_qr_png", item_id=item.id),
+        "audit_export_url": url_for("inventory.item_audit_export", item_id=item.id),
+        "active_lending_record": get_active_lending_record(item),
+        "lending_form_data": lending_form_data or build_lending_form_data({}),
+        "return_form_data": return_form_data or build_return_form_data({}),
+        "audit_history_entries": audit_history_entries,
+        "audit_preview_entries": audit_history_entries[:3],
+        "audit_remaining_entries": audit_history_entries[3:],
+    }
+
+
 @inventory.get("/items")
 @login_required
 def item_list():
@@ -323,6 +417,8 @@ def item_list():
         filters=filters,
         item_type_options=get_distinct_item_types(),
         status_options=list(ItemStatus),
+        updated_sort_params=build_sort_link(filters, "updated_at"),
+        updated_sort_indicator=get_sort_indicator(filters, "updated_at"),
     )
 
 
@@ -342,7 +438,7 @@ def item_create():
         return render_template(
             "inventory/form.html",
             form_title="Add item",
-            form_intro="Create a new inventory record using the core metadata from the equipment sheets.",
+            form_intro="Create a new inventory record with the key details needed for tracking and lending.",
             submit_label="Create item",
             form_data=form_data,
             status_options=list(ItemStatus),
@@ -357,7 +453,7 @@ def item_create():
             render_template(
                 "inventory/form.html",
                 form_title="Add item",
-                form_intro="Create a new inventory record using the core metadata from the equipment sheets.",
+                form_intro="Create a new inventory record with the key details needed for tracking and lending.",
                 submit_label="Create item",
                 form_data=form_data,
                 status_options=list(ItemStatus),
@@ -385,13 +481,40 @@ def item_create():
 @login_required
 def item_detail(item_id: int):
     item = get_item_or_404(item_id)
-    return render_template(
-        "inventory/detail.html",
-        item=item,
-        active_lending_record=get_active_lending_record(item),
-        lending_form_data=build_lending_form_data({}),
-        return_form_data=build_return_form_data({}),
-        audit_history_entries=build_audit_history_entries(item),
+    return render_template("inventory/detail.html", **build_item_detail_context(item))
+
+
+@inventory.get("/items/<int:item_id>/qr.svg")
+@login_required
+def item_qr_svg(item_id: int):
+    item = get_item_or_404(item_id)
+    svg = make_qr_svg(build_item_detail_url(item))
+    return Response(svg, mimetype="image/svg+xml")
+
+
+@inventory.get("/items/<int:item_id>/qr.png")
+@login_required
+def item_qr_png(item_id: int):
+    item = get_item_or_404(item_id)
+    png = make_qr_png(build_item_detail_url(item))
+    filename = f"{item.service_tag.lower()}-qr.png"
+    return Response(
+        png,
+        mimetype="image/png",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@inventory.get("/items/<int:item_id>/audit.json")
+@login_required
+def item_audit_export(item_id: int):
+    item = get_item_or_404(item_id)
+    payload = build_audit_export_payload(item)
+    filename = f"{item.service_tag.lower()}-audit.json"
+    return Response(
+        json.dumps(payload, indent=2),
+        mimetype="application/json",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
@@ -404,7 +527,7 @@ def item_edit(item_id: int):
         return render_template(
             "inventory/form.html",
             form_title="Edit item",
-            form_intro="Update the core inventory metadata. Any extra sheet-specific remarks can stay in notes.",
+            form_intro="Update the item details used for inventory tracking, lending, and reporting.",
             submit_label="Save changes",
             form_data=form_data,
             status_options=list(ItemStatus),
@@ -420,7 +543,7 @@ def item_edit(item_id: int):
             render_template(
                 "inventory/form.html",
                 form_title="Edit item",
-                form_intro="Update the core inventory metadata. Any extra sheet-specific remarks can stay in notes.",
+                form_intro="Update the item details used for inventory tracking, lending, and reporting.",
                 submit_label="Save changes",
                 form_data=form_data,
                 status_options=list(ItemStatus),
@@ -480,10 +603,11 @@ def item_lend(item_id: int):
         return (
             render_template(
                 "inventory/detail.html",
-                item=item,
-                active_lending_record=active_lending_record,
-                lending_form_data=form_data,
-                return_form_data=build_return_form_data({}),
+                **build_item_detail_context(
+                    item,
+                    lending_form_data=form_data,
+                    return_form_data=build_return_form_data({}),
+                ),
             ),
             400,
         )
@@ -539,10 +663,11 @@ def item_return(item_id: int):
         return (
             render_template(
                 "inventory/detail.html",
-                item=item,
-                active_lending_record=active_lending_record,
-                lending_form_data=build_lending_form_data({}),
-                return_form_data=form_data,
+                **build_item_detail_context(
+                    item,
+                    lending_form_data=build_lending_form_data({}),
+                    return_form_data=form_data,
+                ),
             ),
             400,
         )
