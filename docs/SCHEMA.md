@@ -7,18 +7,18 @@ database, and UI stay in sync.
 
 Core item fields are defined in:
 
-- [src/lendbase/models.py](D:\REPOS\lendbase\src\lendbase\models.py:1)
+- [src/lendbase/models.py](../src/lendbase/models.py)
 
 The current CRUD flow uses:
 
-- [src/lendbase/inventory.py](D:\REPOS\lendbase\src\lendbase\inventory.py:1)
-- [src/lendbase/templates/inventory/form.html](D:\REPOS\lendbase\src\lendbase\templates\inventory\form.html:1)
-- [src/lendbase/templates/inventory/detail.html](D:\REPOS\lendbase\src\lendbase\templates\inventory\detail.html:1)
-- [src/lendbase/templates/inventory/list.html](D:\REPOS\lendbase\src\lendbase\templates\inventory\list.html:1)
+- [src/lendbase/inventory.py](../src/lendbase/inventory.py)
+- [src/lendbase/templates/inventory/form.html](../src/lendbase/templates/inventory/form.html)
+- [src/lendbase/templates/inventory/detail.html](../src/lendbase/templates/inventory/detail.html)
+- [src/lendbase/templates/inventory/list.html](../src/lendbase/templates/inventory/list.html)
 
 Database migrations live in:
 
-- [migrations/versions](D:\REPOS\lendbase\migrations\versions)
+- [migrations/versions](../migrations/versions)
 
 ## Decide whether a new field belongs in the schema
 
@@ -38,7 +38,7 @@ Use `notes` when:
 
 1. Update the SQLAlchemy model
 
-Add the field to `Item` in [src/lendbase/models.py](D:\REPOS\lendbase\src\lendbase\models.py:1).
+Add the field to `Item` in [src/lendbase/models.py](../src/lendbase/models.py).
 
 Example:
 
@@ -48,7 +48,7 @@ storage_location: Mapped[str | None] = mapped_column(String(120))
 
 2. Create a migration
 
-Add a new Alembic migration under [migrations/versions](D:\REPOS\lendbase\migrations\versions).
+Add a new Alembic migration under [migrations/versions](../migrations/versions).
 
 Example:
 
@@ -69,7 +69,7 @@ uv run alembic upgrade head
 
 3. Update the Flask CRUD flow
 
-In [src/lendbase/inventory.py](D:\REPOS\lendbase\src\lendbase\inventory.py:1), update:
+In [src/lendbase/inventory.py](../src/lendbase/inventory.py), update:
 
 - `build_item_form_data`
 - `validate_item_form`
@@ -83,19 +83,19 @@ for the form layer.
 
 Add the field to:
 
-- [src/lendbase/templates/inventory/form.html](D:\REPOS\lendbase\src\lendbase\templates\inventory\form.html:1)
-- [src/lendbase/templates/inventory/detail.html](D:\REPOS\lendbase\src\lendbase\templates\inventory\detail.html:1)
+- [src/lendbase/templates/inventory/form.html](../src/lendbase/templates/inventory/form.html)
+- [src/lendbase/templates/inventory/detail.html](../src/lendbase/templates/inventory/detail.html)
 
 Add it to the list page only if it is useful for overview scanning:
 
-- [src/lendbase/templates/inventory/list.html](D:\REPOS\lendbase\src\lendbase\templates\inventory\list.html:1)
+- [src/lendbase/templates/inventory/list.html](../src/lendbase/templates/inventory/list.html)
 
 5. Update tests
 
 Adjust or add tests in:
 
-- [tests/test_inventory.py](D:\REPOS\lendbase\tests\test_inventory.py:1)
-- [tests/test_migrations.py](D:\REPOS\lendbase\tests\test_migrations.py:1)
+- [tests/test_inventory.py](../tests/test_inventory.py)
+- [tests/test_migrations.py](../tests/test_migrations.py)
 
 At minimum, verify:
 
@@ -107,11 +107,11 @@ At minimum, verify:
 
 If the field affects setup or usage, update:
 
-- [README.md](D:\REPOS\lendbase\README.md:1)
+- [README.md](../README.md)
 
 If it affects longer-term product or implementation direction, update:
 
-- [VIBE_NOTES.md](D:\REPOS\lendbase\VIBE_NOTES.md:1)
+- [VIBE_NOTES.md](../VIBE_NOTES.md)
 
 ## Verification checklist
 

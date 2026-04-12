@@ -3,13 +3,13 @@
 A simple internal inventory and lending app for a university admin team.
 
 Implementation notes, roadmap, and product decisions live in
-[VIBE_NOTES.md](D:\REPOS\lendbase\VIBE_NOTES.md:1).
+[VIBE_NOTES.md](VIBE_NOTES.md).
 
 Schema extension guidance lives in
-[docs/SCHEMA.md](D:\REPOS\lendbase\docs\SCHEMA.md:1).
+[docs/SCHEMA.md](docs/SCHEMA.md).
 
 Production hardening guidance lives in
-[docs/PROD_READY.md](D:\REPOS\lendbase\docs\PROD_READY.md:1).
+[docs/PROD_READY.md](docs/PROD_READY.md).
 
 ## What is currently in the repo
 
@@ -93,7 +93,7 @@ Current environment variables:
 - `LENDBASE_DATABASE_URL`: SQLAlchemy database URL
 - `LENDBASE_APP_BASE_URL`: base URL used later for links and QR generation
 
-Example local `.env` values are provided in [.env.example](D:\REPOS\lendbase\.env.example:1).
+Example local `.env` values are provided in [.env.example](.env.example).
 
 ## Initialize the database
 
@@ -262,4 +262,4 @@ Before a real deployment, set `LENDBASE_APP_BASE_URL` to the final internal host
 printed codes resolve to the institution-facing URL.
 
 For deployment hardening and institutional next steps, see
-[docs/PROD_READY.md](D:\REPOS\lendbase\docs\PROD_READY.md:1).
+[docs/PROD_READY.md](docs/PROD_READY.md).
