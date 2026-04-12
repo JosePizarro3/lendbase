@@ -138,33 +138,33 @@ tests/
 
 ## Requirements
 
-- Python 3.11 or newer
+- Python 3.12 or newer
 - `pip` available in your chosen virtual environment
 
 ## Local setup
 
 1. Create a virtual environment:
 
-   ```powershell
-   py -3.12 -m venv .venv
+   ```cmd
+   python -m venv .venv
    ```
 
 2. Activate it:
 
-   ```powershell
-   .\.venv\Scripts\Activate.ps1
+   ```cmd
+   .\.venv\Scripts\activate
    ```
 
 3. Install the project in editable mode with developer dependencies:
 
-   ```powershell
-   python -m pip install -e ".[dev]"
+   ```cmd
+   uv pip install -e ".[dev]"
    ```
 
 4. Create a local environment file:
 
-   ```powershell
-   Copy-Item .env.example .env
+   ```cmd
+   copy .env.example .env
    ```
 
 ## Environment configuration
@@ -190,8 +190,8 @@ reworking the app setup.
 
 Use the Flask development server:
 
-```powershell
-$env:FLASK_APP = "lendbase.app:create_app"
+```cmd
+set FLASK_APP=lendbase.app:create_app
 python -m flask --debug run
 ```
 
