@@ -13,6 +13,7 @@ Implementation notes, roadmap, and product decisions live in
 - SQLAlchemy models for items, lending records, and audit history
 - Alembic migration setup with an initial schema migration
 - Shared admin authentication with password hashing and session login
+- Browser-backed item list, create, detail, and edit pages
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -25,6 +26,7 @@ src/lendbase/
   db.py             Database engine/session setup
   models.py         SQLAlchemy models
   auth.py           Login, logout, and admin bootstrap flow
+  inventory.py      Item list/detail/create/edit routes and validation
   web.py            Minimal web routes for the scaffold step
   templates/        Server-rendered HTML templates
   static/           Minimal styling assets
@@ -32,6 +34,7 @@ migrations/         Alembic configuration and migration scripts
 tests/
   test_app.py       Startup, configuration, and DB wiring tests
   test_auth.py      Authentication and bootstrap flow tests
+  test_inventory.py Item CRUD tests
 ```
 
 ## Requirements
@@ -168,12 +171,14 @@ GitHub Actions also runs:
 1. Start the app locally.
 2. Run `uv run alembic upgrade head`.
 3. Open `/setup/admin` and create the first admin account.
-4. Open the home page and confirm the authenticated dashboard page renders.
-5. Log out and verify `/` redirects to `/login`.
-6. Run the password reset command and confirm you can log in with the new password.
-7. Open `/health` and confirm it returns JSON with status `ok`.
-8. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-9. Change `.env` values and restart the app to confirm configuration is picked up.
+4. Open `/items` and create a first inventory item.
+5. Open the item detail page and confirm the metadata is shown.
+6. Edit the item and confirm the updated values persist.
+7. Log out and verify `/items` redirects to `/login`.
+8. Run the password reset command and confirm you can log in with the new password.
+9. Open `/health` and confirm it returns JSON with status `ok`.
+10. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+11. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
@@ -195,6 +200,11 @@ Export is not implemented in this branch yet.
 
 CSV export is planned for `feature/06-search-filter-export`. Excel import remains a
 separate later migration task rather than a primary app UI feature.
+
+The existing workbook in `data/` was used to guide the item field mapping for this
+branch. Repeating core columns such as equipment, model, service tag, and HU inventory
+number map cleanly to the English UI fields, while any extra sheet-specific remarks are
+intended to land in `notes`.
 
 ## QR codes
 

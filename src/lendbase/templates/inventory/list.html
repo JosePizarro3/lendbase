@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}lendbase | Items{% endblock %}
+
+{% block content %}
+  <section class="page-header">
+    <div>
+      <p class="eyebrow">Inventory</p>
+      <h2>Items</h2>
+      <p class="lead compact">
+        Core inventory records based on the existing equipment spreadsheets, now in a
+        browser-friendly internal app.
+      </p>
+    </div>
+    <a class="button" href="{{ url_for('inventory.item_create') }}">Add item</a>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span class="stat-label">Total items</span>
+      <strong class="stat-value">{{ items|length }}</strong>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">In storage</span>
+      <strong class="stat-value">{{ items|selectattr('status.value', 'equalto', 'in storage')|list|length }}</strong>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Lent out</span>
+      <strong class="stat-value">{{ items|selectattr('status.value', 'equalto', 'lent out')|list|length }}</strong>
+    </article>
+  </section>
+
+  <section class="panel">
+    {% if items %}
+      <div class="table-wrap">
+        <table class="inventory-table">
+          <thead>
+            <tr>
+              <th>Item type</th>
+              <th>Inventory number</th>
+              <th>HU number</th>
+              <th>Brand/model</th>
+              <th>Serial number</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+              <tr>
+                <td><a class="table-link" href="{{ url_for('inventory.item_detail', item_id=item.id) }}">{{ item.item_type }}</a></td>
+                <td>{{ item.inventory_number }}</td>
+                <td>{{ item.hu_number }}</td>
+                <td>{{ item.brand_model or "—" }}</td>
+                <td>{{ item.serial_number or "—" }}</td>
+                <td><span class="status-pill status-{{ item.status.name|lower|replace('_', '-') }}">{{ item.status.value }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <h3>No items yet</h3>
+        <p>Start by adding the first inventory record for a laptop, monitor, keyboard, or other equipment.</p>
+        <a class="button" href="{{ url_for('inventory.item_create') }}">Create the first item</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

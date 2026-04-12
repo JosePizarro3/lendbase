@@ -16,6 +16,8 @@
           </div>
           <nav class="site-nav">
             {% if g.admin_user %}
+              <a class="button button-secondary" href="{{ url_for('web.home') }}">Dashboard</a>
+              <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Items</a>
               <span class="nav-user">Signed in as {{ g.admin_user.username }}</span>
               <form action="{{ url_for('auth.logout') }}" method="post">
                 <button class="button button-secondary" type="submit">Log out</button>

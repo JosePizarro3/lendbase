@@ -29,6 +29,7 @@ Project notes, implementation sequence, and working assumptions live here so
 - SQLAlchemy ORM models for core inventory, lending, and audit entities
 - Alembic migration setup with the initial schema
 - Shared admin authentication with bootstrap-only account creation
+- Browser-backed item CRUD with notes informed by the workbook in `data/`
 - Pytest coverage for startup paths
 - GitHub Actions CI and pre-commit automation
 
