@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
@@ -114,6 +114,71 @@ def test_item_list_search_and_filter_work():
     assert response.status_code == 200
     assert b"ST-FILTER-2" in response.data
     assert b"ST-FILTER-1" not in response.data
+
+
+def test_item_list_defaults_to_newest_updated_first_and_shows_last_update():
+    app = create_test_app()
+
+    with app.app_context():
+        older_item = Item(
+            item_type="Laptop",
+            service_tag="ST-OLDER",
+            hu_number="HU-OLDER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        newer_item = Item(
+            item_type="Monitor",
+            service_tag="ST-NEWER",
+            hu_number="HU-NEWER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add_all([older_item, newer_item])
+        db_session.commit()
+
+        older_item.updated_at = older_item.updated_at - timedelta(days=2)
+        newer_item.updated_at = newer_item.updated_at + timedelta(days=2)
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items")
+
+    assert response.status_code == 200
+    assert b"Last update" in response.data
+    assert response.data.index(b"ST-NEWER") < response.data.index(b"ST-OLDER")
+    assert b"Last update \xe2\x86\x93" in response.data
+
+
+def test_item_list_can_sort_last_update_oldest_first():
+    app = create_test_app()
+
+    with app.app_context():
+        older_item = Item(
+            item_type="Laptop",
+            service_tag="ST-ASC-OLDER",
+            hu_number="HU-ASC-OLDER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        newer_item = Item(
+            item_type="Monitor",
+            service_tag="ST-ASC-NEWER",
+            hu_number="HU-ASC-NEWER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add_all([older_item, newer_item])
+        db_session.commit()
+
+        older_item.updated_at = older_item.updated_at - timedelta(days=2)
+        newer_item.updated_at = newer_item.updated_at + timedelta(days=2)
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items?sort=updated_at&direction=asc")
+
+    assert response.status_code == 200
+    assert response.data.index(b"ST-ASC-OLDER") < response.data.index(b"ST-ASC-NEWER")
+    assert b"Last update \xe2\x86\x91" in response.data
 
 
 def test_item_list_lent_out_view_only_shows_lent_items():

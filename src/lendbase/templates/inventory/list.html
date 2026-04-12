@@ -85,6 +85,11 @@
               <th>Brand/model</th>
               <th>Serial number</th>
               <th>Status</th>
+              <th>
+                <a class="table-sort-link" href="{{ url_for('inventory.item_list', **updated_sort_params) }}">
+                  Last update{% if updated_sort_indicator %} {{ updated_sort_indicator }}{% endif %}
+                </a>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -96,6 +101,7 @@
                 <td>{{ item.brand_model or "-" }}</td>
                 <td>{{ item.serial_number or "-" }}</td>
                 <td><span class="status-pill status-{{ item.status.name|lower|replace('_', '-') }}">{{ item.status.value }}</span></td>
+                <td>{{ item.updated_at.strftime("%Y-%m-%d %H:%M") if item.updated_at else "-" }}</td>
               </tr>
             {% endfor %}
           </tbody>

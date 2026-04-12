@@ -257,6 +257,8 @@ def build_list_filters(args) -> dict[str, str]:
         "item_type": args.get("item_type", "").strip(),
         "status": args.get("status", "").strip(),
         "view": args.get("view", "").strip(),
+        "sort": args.get("sort", "updated_at").strip(),
+        "direction": args.get("direction", "desc").strip().lower(),
     }
 
 
@@ -288,7 +290,38 @@ def build_item_list_query(filters: dict[str, str]):
     query = select(Item)
     if conditions:
         query = query.where(and_(*conditions))
+
+    sort_key = filters.get("sort", "updated_at")
+    direction = filters.get("direction", "desc")
+    is_desc = direction != "asc"
+
+    if sort_key == "updated_at":
+        primary_order = Item.updated_at.desc() if is_desc else Item.updated_at.asc()
+        secondary_order = Item.id.desc() if is_desc else Item.id.asc()
+        return query.order_by(primary_order, secondary_order)
+
     return query.order_by(Item.updated_at.desc(), Item.id.desc())
+
+
+def build_sort_link(filters: dict[str, str], sort_key: str) -> dict[str, str]:
+    next_direction = "asc"
+    if filters.get("sort") == sort_key and filters.get("direction") == "asc":
+        next_direction = "desc"
+
+    return {
+        "query": filters.get("query", ""),
+        "item_type": filters.get("item_type", ""),
+        "status": filters.get("status", ""),
+        "view": filters.get("view", ""),
+        "sort": sort_key,
+        "direction": next_direction,
+    }
+
+
+def get_sort_indicator(filters: dict[str, str], sort_key: str) -> str:
+    if filters.get("sort") != sort_key:
+        return ""
+    return "↑" if filters.get("direction") == "asc" else "↓"
 
 
 def get_distinct_item_types() -> list[str]:
@@ -384,6 +417,8 @@ def item_list():
         filters=filters,
         item_type_options=get_distinct_item_types(),
         status_options=list(ItemStatus),
+        updated_sort_params=build_sort_link(filters, "updated_at"),
+        updated_sort_indicator=get_sort_indicator(filters, "updated_at"),
     )
 
 
