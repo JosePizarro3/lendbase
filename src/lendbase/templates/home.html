@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}lendbase | Home{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Step 1 scaffold</p>
+      <h2>Internal inventory management for a small university admin team</h2>
+      <p class="lead">
+        This first branch sets up the app factory, environment-based configuration,
+        local development defaults, and a minimal browser UI.
+      </p>
+    </div>
+    <dl class="summary-card">
+      <div>
+        <dt>Application</dt>
+        <dd>{{ app_name }}</dd>
+      </div>
+      <div>
+        <dt>Environment</dt>
+        <dd>{{ environment }}</dd>
+      </div>
+      <div>
+        <dt>Base URL</dt>
+        <dd>{{ app_base_url }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <h3>What is included in this branch</h3>
+    <ul>
+      <li>Python project metadata and installable package layout</li>
+      <li>Config separation for development, testing, and production</li>
+      <li>Placeholder database setting and instance directory creation</li>
+      <li>Health check endpoint at <code>/health</code></li>
+      <li>Initial developer documentation for setup, run, test, and debugging</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h3>What comes next</h3>
+    <p>
+      The next branch adds SQLAlchemy models, Alembic migrations, and the initial
+      database schema for inventory items, lending events, and audit history.
+    </p>
+  </section>
+{% endblock %}
