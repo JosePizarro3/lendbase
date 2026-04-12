@@ -27,10 +27,24 @@ class AuditEventType(str, enum.Enum):
     ITEM_RETURNED = "item_returned"
 
 
+class AdminUser(Base):
+    __tablename__ = "admin_users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
 class Item(Base):
     __tablename__ = "items"
     __table_args__ = (
-        Index("ix_items_inventory_number", "inventory_number"),
+        Index("ix_items_service_tag", "service_tag"),
         Index("ix_items_hu_number", "hu_number"),
         Index("ix_items_serial_number", "serial_number"),
         Index("ix_items_item_type", "item_type"),
@@ -39,7 +53,7 @@ class Item(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     item_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    inventory_number: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
+    service_tag: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     hu_number: Mapped[str] = mapped_column(String(120), nullable=False, unique=True)
     serial_number: Mapped[str | None] = mapped_column(String(200))
     brand_model: Mapped[str | None] = mapped_column(String(200))
@@ -59,7 +73,9 @@ class Item(Base):
     )
 
     lending_records: Mapped[list["LendingRecord"]] = relationship(
-        back_populates="item", cascade="all, delete-orphan", order_by="desc(LendingRecord.lent_date)"
+        back_populates="item",
+        cascade="all, delete-orphan",
+        order_by="desc(LendingRecord.lent_date)",
     )
     audit_entries: Mapped[list["AuditLogEntry"]] = relationship(
         back_populates="item", cascade="all, delete-orphan", order_by="desc(AuditLogEntry.event_at)"

@@ -89,7 +89,12 @@ def upgrade() -> None:
         ),
         sa.Column("message", sa.String(length=255), nullable=False),
         sa.Column("details", sa.JSON(), nullable=True),
-        sa.ForeignKeyConstraint(["item_id"], ["items.id"], name=op.f("fk_audit_log_entries_item_id_items"), ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["item_id"],
+            ["items.id"],
+            name=op.f("fk_audit_log_entries_item_id_items"),
+            ondelete="CASCADE",
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_audit_log_entries")),
     )
     op.create_index(
@@ -119,10 +124,17 @@ def upgrade() -> None:
             server_default=sa.text("CURRENT_TIMESTAMP"),
             nullable=False,
         ),
-        sa.ForeignKeyConstraint(["item_id"], ["items.id"], name=op.f("fk_lending_records_item_id_items"), ondelete="CASCADE"),
+        sa.ForeignKeyConstraint(
+            ["item_id"],
+            ["items.id"],
+            name=op.f("fk_lending_records_item_id_items"),
+            ondelete="CASCADE",
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_lending_records")),
     )
-    op.create_index("ix_lending_records_return_date", "lending_records", ["return_date"], unique=False)
+    op.create_index(
+        "ix_lending_records_return_date", "lending_records", ["return_date"], unique=False
+    )
 
 
 def downgrade() -> None:
