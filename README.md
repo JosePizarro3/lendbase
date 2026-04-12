@@ -123,6 +123,15 @@ Notes:
 - The bootstrap route is disabled after the first admin account is created
 - Browser-facing app routes require a logged-in admin session
 
+Resetting the shared admin password:
+
+```cmd
+python -m flask --app lendbase.app:create_app reset-admin-password --username your-admin-name
+```
+
+The command prompts for the new password and confirmation without echoing the password
+back to the terminal.
+
 ## Test instructions
 
 Run the current automated tests with:
@@ -161,9 +170,10 @@ GitHub Actions also runs:
 3. Open `/setup/admin` and create the first admin account.
 4. Open the home page and confirm the authenticated dashboard page renders.
 5. Log out and verify `/` redirects to `/login`.
-6. Open `/health` and confirm it returns JSON with status `ok`.
-7. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-8. Change `.env` values and restart the app to confirm configuration is picked up.
+6. Run the password reset command and confirm you can log in with the new password.
+7. Open `/health` and confirm it returns JSON with status `ok`.
+8. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+9. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
@@ -173,6 +183,7 @@ Common issues in this step:
 - If `uv run alembic upgrade head` fails, check that `LENDBASE_DATABASE_URL` is set to
   a valid SQLAlchemy URL.
 - If `/login` redirects to `/setup/admin`, the shared admin account has not been created yet.
+- If the password reset command says the admin user was not found, verify the username in the database and the selected `.env` database path.
 - If `.env` changes are not visible, restart the Flask development server.
 - If `uv` is missing, install it from Astral and rerun `uv sync --extra dev`.
 - If you prefer not to activate the virtual environment, you can still run commands

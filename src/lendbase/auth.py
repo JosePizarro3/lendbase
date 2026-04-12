@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import wraps
 
+import click
 from flask import (
     Blueprint,
     flash,
@@ -12,12 +13,22 @@ from flask import (
     session,
     url_for,
 )
+from flask.cli import with_appcontext
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from lendbase.db import db_session
 from lendbase.models import AdminUser
 
 auth = Blueprint("auth", __name__)
+
+
+def validate_password_rules(password: str, password_confirm: str) -> list[str]:
+    errors: list[str] = []
+    if len(password) < 12:
+        errors.append("Password must be at least 12 characters long.")
+    if password != password_confirm:
+        errors.append("Password confirmation does not match.")
+    return errors
 
 
 def admin_exists() -> bool:
@@ -91,10 +102,7 @@ def setup_admin():
     errors: list[str] = []
     if not username:
         errors.append("Username is required.")
-    if len(password) < 12:
-        errors.append("Password must be at least 12 characters long.")
-    if password != password_confirm:
-        errors.append("Password confirmation does not match.")
+    errors.extend(validate_password_rules(password, password_confirm))
 
     if errors:
         for error in errors:
@@ -116,3 +124,25 @@ def logout():
     session.clear()
     flash("Logged out.", "success")
     return redirect(url_for("auth.login"))
+
+
+@click.command("reset-admin-password")
+@click.option("--username", required=True, help="Admin username to update.")
+@click.password_option(
+    "--password",
+    confirmation_prompt=True,
+    prompt=True,
+    help="New password for the admin user.",
+)
+@with_appcontext
+def reset_admin_password_command(username: str, password: str) -> None:
+    if len(password) < 12:
+        raise click.ClickException("Password must be at least 12 characters long.")
+
+    admin_user = db_session.query(AdminUser).filter(AdminUser.username == username).one_or_none()
+    if admin_user is None:
+        raise click.ClickException(f"Admin user '{username}' was not found.")
+
+    admin_user.password_hash = generate_password_hash(password)
+    db_session.commit()
+    click.echo(f"Password updated for admin user '{username}'.")

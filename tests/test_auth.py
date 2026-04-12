@@ -1,4 +1,4 @@
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
@@ -96,3 +96,39 @@ def test_setup_admin_is_disabled_after_first_admin_exists():
 
     assert response.status_code == 200
     assert b"Admin user already configured. Please log in." in response.data
+
+
+def test_reset_admin_password_command_updates_hash():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add(
+            AdminUser(username="admin", password_hash=generate_password_hash("old-password-123"))
+        )
+        db_session.commit()
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(
+        args=["reset-admin-password", "--username", "admin"],
+        input="new-password-456\nnew-password-456\n",
+    )
+
+    assert result.exit_code == 0
+    assert "Password updated for admin user 'admin'." in result.output
+
+    with app.app_context():
+        admin_user = db_session.query(AdminUser).filter_by(username="admin").one()
+        assert check_password_hash(admin_user.password_hash, "new-password-456")
+
+
+def test_reset_admin_password_command_fails_for_missing_user():
+    app = create_test_app()
+
+    runner = app.test_cli_runner()
+    result = runner.invoke(
+        args=["reset-admin-password", "--username", "missing-admin"],
+        input="new-password-456\nnew-password-456\n",
+    )
+
+    assert result.exit_code != 0
+    assert "Admin user 'missing-admin' was not found." in result.output

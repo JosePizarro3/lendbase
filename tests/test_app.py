@@ -40,3 +40,10 @@ def test_relative_sqlite_database_url_uses_instance_path(tmp_path):
     resolved = resolve_database_url("sqlite:///lendbase-dev.db", str(tmp_path))
 
     assert resolved == f"sqlite:///{tmp_path.as_posix()}/lendbase-dev.db"
+
+
+def test_legacy_instance_relative_sqlite_database_url_is_resolved_from_project_root(tmp_path):
+    instance_path = tmp_path / "instance"
+    resolved = resolve_database_url("sqlite:///instance/lendbase-dev.db", str(instance_path))
+
+    assert resolved == f"sqlite:///{tmp_path.as_posix()}/instance/lendbase-dev.db"

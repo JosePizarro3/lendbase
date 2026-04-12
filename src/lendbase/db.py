@@ -30,7 +30,10 @@ def resolve_database_url(database_url: str, instance_path: str) -> str:
     if url.drivername.startswith("sqlite") and url.database not in (None, "", ":memory:"):
         db_path = Path(url.database)
         if not db_path.is_absolute():
-            resolved_path = Path(instance_path) / db_path
+            if db_path.parts and db_path.parts[0] == "instance":
+                resolved_path = Path(instance_path).parent / db_path
+            else:
+                resolved_path = Path(instance_path) / db_path
             return f"sqlite:///{resolved_path.as_posix()}"
     return database_url
 
