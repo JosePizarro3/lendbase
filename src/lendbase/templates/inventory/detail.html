@@ -8,8 +8,7 @@
       <p class="eyebrow">Inventory detail</p>
       <h2>{{ item.item_type }} | {{ item.service_tag }}</h2>
       <p class="lead compact">
-        Core item metadata is editable now. Lending workflows and richer history interactions
-        will land in the next branches, but the detail page already exposes the structure.
+        Review this item, update its metadata, manage lending, and inspect its full history.
       </p>
     </div>
     <div class="action-row">
@@ -98,8 +97,11 @@
     <article class="panel">
       <h3>Audit history</h3>
       {% if audit_history_entries %}
+        <div class="panel-actions">
+          <a class="button button-secondary" href="{{ audit_export_url }}">Export JSON</a>
+        </div>
         <div class="history-stack">
-          {% for entry in audit_history_entries %}
+          {% for entry in audit_preview_entries %}
             <article class="history-entry">
               <div class="history-meta">
                 <span class="history-time">{{ entry.timestamp.strftime("%Y-%m-%d %H:%M") if entry.timestamp else "-" }}</span>
@@ -115,6 +117,30 @@
               {% endif %}
             </article>
           {% endfor %}
+
+          {% if audit_remaining_entries %}
+            <details class="history-more">
+              <summary>Show {{ audit_remaining_entries|length }} older audit entr{% if audit_remaining_entries|length == 1 %}y{% else %}ies{% endif %}</summary>
+              <div class="history-stack history-stack-nested">
+                {% for entry in audit_remaining_entries %}
+                  <article class="history-entry">
+                    <div class="history-meta">
+                      <span class="history-time">{{ entry.timestamp.strftime("%Y-%m-%d %H:%M") if entry.timestamp else "-" }}</span>
+                      <span class="history-type">{{ entry.event_type }}</span>
+                    </div>
+                    <p class="history-message">{{ entry.message }}</p>
+                    {% if entry.detail_lines %}
+                      <ul class="history-details">
+                        {% for line in entry.detail_lines %}
+                          <li>{{ line }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </article>
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
         </div>
       {% else %}
         <p>No audit entries yet.</p>

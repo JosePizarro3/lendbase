@@ -5,17 +5,22 @@
 {% block content %}
   <section class="hero">
     <div>
-      <p class="eyebrow">Step 4 item CRUD</p>
-      <h2>Internal inventory management for a small university admin team</h2>
+      <p class="eyebrow">Home</p>
+      <h2>University equipment inventory</h2>
       <p class="lead">
-        The app now has real inventory pages for listing items, adding records,
-        editing metadata, and reviewing item details in the browser.
+        Use this internal tool to keep track of equipment, lending activity, and item history
+        in one place. Start from the item list to add records, search existing equipment, or
+        register a loan or return.
       </p>
+      <div class="form-actions">
+        <a class="button" href="{{ url_for('inventory.item_list') }}">Open items</a>
+        <a class="button button-secondary" href="{{ url_for('inventory.item_create') }}">Add item</a>
+      </div>
     </div>
     <dl class="summary-card">
       <div>
-        <dt>Application</dt>
-        <dd>{{ app_name }}</dd>
+        <dt>Signed in as</dt>
+        <dd>{{ admin_username }}</dd>
       </div>
       <div>
         <dt>Environment</dt>
@@ -25,40 +30,41 @@
         <dt>Base URL</dt>
         <dd>{{ app_base_url }}</dd>
       </div>
-      <div>
-        <dt>Signed in as</dt>
-        <dd>{{ admin_username }}</dd>
-      </div>
     </dl>
   </section>
 
-  <section class="panel">
-    <h3>What is included in this branch</h3>
-    <ul>
-      <li>Authenticated item list page with inventory summaries</li>
-      <li>Create and edit forms for the core inventory fields</li>
-      <li>Item detail page with lending and audit sections ready for later branches</li>
-      <li>Validation for required fields and unique identifiers</li>
-      <li>Notes field for extra free-form metadata from the existing spreadsheets</li>
-    </ul>
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span class="stat-label">Total items</span>
+      <strong class="stat-value">{{ summary.total_items }}</strong>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Currently lent out</span>
+      <strong class="stat-value">{{ summary.lent_out_items }}</strong>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Broken, lost, or under repair</span>
+      <strong class="stat-value">{{ summary.attention_items }}</strong>
+    </article>
   </section>
 
-  <section class="panel">
-    <h3>What comes next</h3>
-    <p>
-      The next branch adds lending and return workflows on top of the item records
-      so the app can track handovers directly in the browser.
-    </p>
-  </section>
+  <section class="detail-grid">
+    <article class="panel">
+      <h3>Start here</h3>
+      <ul class="simple-list">
+        <li>Open the item list to search, filter, and export inventory data.</li>
+        <li>Create a new item when equipment arrives or needs to be added manually.</li>
+        <li>Use the item detail page to lend, return, edit, or print QR codes.</li>
+      </ul>
+    </article>
 
-  <section class="panel">
-    <h3>Start using the inventory</h3>
-    <p>
-      Open <a href="{{ url_for('inventory.item_list') }}">the item list</a> to add the
-      first records. The spreadsheet review in <code>data/</code> informed the default
-      field mapping: equipment becomes item type, the spreadsheet service tag now maps
-      to service tag in the app, model stays brand/model, HU inventory number stays HU number, and any extra
-      sheet-specific remarks fit into notes.
-    </p>
+    <article class="panel">
+      <h3>What this app stores</h3>
+      <ul class="simple-list">
+        <li>Core metadata such as service tag, HU number, item type, and status.</li>
+        <li>Lending records with borrower name, lend date, return date, and comments.</li>
+        <li>An audit trail for item creation, edits, status changes, lending, and returns.</li>
+      </ul>
+    </article>
   </section>
 {% endblock %}

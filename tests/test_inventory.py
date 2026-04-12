@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
@@ -43,6 +43,46 @@ def test_item_list_requires_authentication():
     assert "/login?next=/items" in response.headers["Location"]
 
 
+def test_home_page_shows_inventory_summary_and_home_navigation():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add_all(
+            [
+                Item(
+                    item_type="Laptop",
+                    service_tag="ST-HOME-1",
+                    hu_number="HU-HOME-1",
+                    status=ItemStatus.IN_STORAGE,
+                ),
+                Item(
+                    item_type="Monitor",
+                    service_tag="ST-HOME-2",
+                    hu_number="HU-HOME-2",
+                    status=ItemStatus.LENT_OUT,
+                ),
+                Item(
+                    item_type="Dock",
+                    service_tag="ST-HOME-3",
+                    hu_number="HU-HOME-3",
+                    status=ItemStatus.UNDER_REPAIR,
+                ),
+            ]
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"Home" in response.data
+    assert b"Total items" in response.data
+    assert b"Currently lent out" in response.data
+    assert b"Broken, lost, or under repair" in response.data
+    assert b"Open items" in response.data
+
+
 def test_item_list_search_and_filter_work():
     app = create_test_app()
 
@@ -74,6 +114,71 @@ def test_item_list_search_and_filter_work():
     assert response.status_code == 200
     assert b"ST-FILTER-2" in response.data
     assert b"ST-FILTER-1" not in response.data
+
+
+def test_item_list_defaults_to_newest_updated_first_and_shows_last_update():
+    app = create_test_app()
+
+    with app.app_context():
+        older_item = Item(
+            item_type="Laptop",
+            service_tag="ST-OLDER",
+            hu_number="HU-OLDER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        newer_item = Item(
+            item_type="Monitor",
+            service_tag="ST-NEWER",
+            hu_number="HU-NEWER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add_all([older_item, newer_item])
+        db_session.commit()
+
+        older_item.updated_at = older_item.updated_at - timedelta(days=2)
+        newer_item.updated_at = newer_item.updated_at + timedelta(days=2)
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items")
+
+    assert response.status_code == 200
+    assert b"Last update" in response.data
+    assert response.data.index(b"ST-NEWER") < response.data.index(b"ST-OLDER")
+    assert b"Last update \xe2\x86\x93" in response.data
+
+
+def test_item_list_can_sort_last_update_oldest_first():
+    app = create_test_app()
+
+    with app.app_context():
+        older_item = Item(
+            item_type="Laptop",
+            service_tag="ST-ASC-OLDER",
+            hu_number="HU-ASC-OLDER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        newer_item = Item(
+            item_type="Monitor",
+            service_tag="ST-ASC-NEWER",
+            hu_number="HU-ASC-NEWER",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add_all([older_item, newer_item])
+        db_session.commit()
+
+        older_item.updated_at = older_item.updated_at - timedelta(days=2)
+        newer_item.updated_at = newer_item.updated_at + timedelta(days=2)
+        db_session.commit()
+
+    with app.test_client() as client:
+        login(client)
+        response = client.get("/items?sort=updated_at&direction=asc")
+
+    assert response.status_code == 200
+    assert response.data.index(b"ST-ASC-OLDER") < response.data.index(b"ST-ASC-NEWER")
+    assert b"Last update \xe2\x86\x91" in response.data
 
 
 def test_item_list_lent_out_view_only_shows_lent_items():
@@ -452,3 +557,65 @@ def test_item_detail_shows_audit_history_details():
     assert b"Item edited." in response.data
     assert b"brand model: Old Model -&gt; New Model" in response.data
     assert b"notes: - -&gt; Updated note" in response.data
+
+
+def test_item_detail_limits_audit_preview_and_exports_json():
+    app = create_test_app()
+
+    with app.app_context():
+        item = Item(
+            item_type="Laptop",
+            service_tag="ST-AUDIT",
+            hu_number="HU-AUDIT",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add(item)
+        db_session.flush()
+        db_session.add_all(
+            [
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.ITEM_CREATED,
+                    message="Created 1",
+                    details={"after": {"service_tag": "ST-AUDIT"}},
+                ),
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.ITEM_EDITED,
+                    message="Edited 2",
+                    details={"before": {"notes": None}, "after": {"notes": "a"}},
+                ),
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.STATUS_CHANGED,
+                    message="Status 3",
+                    details={"before_status": "in storage", "after_status": "broken"},
+                ),
+                AuditLogEntry(
+                    item=item,
+                    event_type=AuditEventType.ITEM_RETURNED,
+                    message="Returned 4",
+                    details={"borrower_name": "Sam", "return_date": "2026-04-12"},
+                ),
+            ]
+        )
+        db_session.commit()
+        item_id = item.id
+
+    with app.test_client() as client:
+        login(client)
+        detail_response = client.get(f"/items/{item_id}")
+        export_response = client.get(f"/items/{item_id}/audit.json")
+
+    assert detail_response.status_code == 200
+    assert b"Export JSON" in detail_response.data
+    assert b"Show 1 older audit entry" in detail_response.data
+    assert detail_response.data.count(b"history-entry") == 4
+    assert export_response.status_code == 200
+    assert export_response.mimetype == "application/json"
+    assert (
+        export_response.headers["Content-Disposition"]
+        == 'attachment; filename="st-audit-audit.json"'
+    )
+    assert b'"service_tag": "ST-AUDIT"' in export_response.data
+    assert b'"message": "Returned 4"' in export_response.data
