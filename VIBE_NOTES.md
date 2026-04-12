@@ -31,6 +31,10 @@ Project notes, implementation sequence, and working assumptions live here so
 - Shared admin authentication with bootstrap-only account creation
 - Browser-backed item CRUD with notes informed by the workbook in `data/`
 - Browser-backed lending and return workflow on top of item detail pages
+- Search by service tag, HU number, and serial number plus CSV export of filtered results
+- Richer item-level audit history with readable change details
+- Item-level QR generation with SVG and PNG download options
+- Simpler Home page with inventory summary and quick actions
 - Pytest coverage for startup paths
 - GitHub Actions CI and pre-commit automation
 
@@ -86,6 +90,7 @@ Project notes, implementation sequence, and working assumptions live here so
 
 9. `feature/09-polish-deployment-notes`
    - UX cleanup
+   - Cleaner Home page and simpler navigation labels
    - Debugging notes
    - Test guide
    - Production readiness gaps and deployment considerations
