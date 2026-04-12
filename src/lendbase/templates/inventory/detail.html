@@ -8,8 +8,7 @@
       <p class="eyebrow">Inventory detail</p>
       <h2>{{ item.item_type }} | {{ item.service_tag }}</h2>
       <p class="lead compact">
-        Core item metadata is editable now. Lending workflows and richer history interactions
-        will land in the next branches, but the detail page already exposes the structure.
+        Review this item, update its metadata, manage lending, and inspect its full history.
       </p>
     </div>
     <div class="action-row">
@@ -44,29 +43,139 @@
 
   <section class="detail-grid">
     <article class="panel">
+      <h3>Lending actions</h3>
+      {% if active_lending_record %}
+        <p class="lead compact">This item is currently lent to <strong>{{ active_lending_record.borrower_name }}</strong> since {{ active_lending_record.lent_date }}.</p>
+        <form class="item-form" action="{{ url_for('inventory.item_return', item_id=item.id) }}" method="post">
+          <div class="form-stack">
+            <label for="return_date">Return date</label>
+            <input id="return_date" name="return_date" type="date" value="{{ return_form_data.return_date }}" required>
+          </div>
+          <div class="form-actions">
+            <button class="button" type="submit">Register return</button>
+          </div>
+        </form>
+      {% else %}
+        <p class="lead compact">This item is available to lend. Borrower name, lend date, and free-text comments are stored in the lending record.</p>
+        <form class="item-form" action="{{ url_for('inventory.item_lend', item_id=item.id) }}" method="post">
+          <div class="form-grid">
+            <div>
+              <label for="borrower_name">Borrower name</label>
+              <input id="borrower_name" name="borrower_name" type="text" value="{{ lending_form_data.borrower_name }}" required>
+            </div>
+            <div>
+              <label for="lent_date">Lent date</label>
+              <input id="lent_date" name="lent_date" type="date" value="{{ lending_form_data.lent_date }}" required>
+            </div>
+          </div>
+          <div class="form-stack">
+            <label for="comments">Comments</label>
+            <textarea id="comments" name="comments" rows="4" placeholder="Optional handover notes, room info, or return expectations.">{{ lending_form_data.comments }}</textarea>
+          </div>
+          <div class="form-actions">
+            <button class="button" type="submit">Lend item</button>
+          </div>
+        </form>
+      {% endif %}
+    </article>
+
+    <article class="panel">
       <h3>Lending history</h3>
       {% if item.lending_records %}
         <ul class="simple-list">
           {% for lending in item.lending_records %}
-            <li>{{ lending.borrower_name }} | lent {{ lending.lent_date }}{% if lending.return_date %} | returned {{ lending.return_date }}{% endif %}</li>
+            <li>{{ lending.borrower_name }} | lent {{ lending.lent_date }}{% if lending.return_date %} | returned {{ lending.return_date }}{% endif %}{% if lending.comments %} | {{ lending.comments }}{% endif %}</li>
           {% endfor %}
         </ul>
       {% else %}
         <p>No lending records yet.</p>
       {% endif %}
     </article>
+  </section>
 
+  <section class="detail-grid">
     <article class="panel">
       <h3>Audit history</h3>
-      {% if item.audit_entries %}
-        <ul class="simple-list">
-          {% for entry in item.audit_entries %}
-            <li>{{ entry.event_at.strftime("%Y-%m-%d %H:%M") if entry.event_at else "-" }} | {{ entry.message }}</li>
+      {% if audit_history_entries %}
+        <div class="panel-actions">
+          <a class="button button-secondary" href="{{ audit_export_url }}">Export JSON</a>
+        </div>
+        <div class="history-stack">
+          {% for entry in audit_preview_entries %}
+            <article class="history-entry">
+              <div class="history-meta">
+                <span class="history-time">{{ entry.timestamp.strftime("%Y-%m-%d %H:%M") if entry.timestamp else "-" }}</span>
+                <span class="history-type">{{ entry.event_type }}</span>
+              </div>
+              <p class="history-message">{{ entry.message }}</p>
+              {% if entry.detail_lines %}
+                <ul class="history-details">
+                  {% for line in entry.detail_lines %}
+                    <li>{{ line }}</li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </article>
           {% endfor %}
-        </ul>
+
+          {% if audit_remaining_entries %}
+            <details class="history-more">
+              <summary>Show {{ audit_remaining_entries|length }} older audit entr{% if audit_remaining_entries|length == 1 %}y{% else %}ies{% endif %}</summary>
+              <div class="history-stack history-stack-nested">
+                {% for entry in audit_remaining_entries %}
+                  <article class="history-entry">
+                    <div class="history-meta">
+                      <span class="history-time">{{ entry.timestamp.strftime("%Y-%m-%d %H:%M") if entry.timestamp else "-" }}</span>
+                      <span class="history-type">{{ entry.event_type }}</span>
+                    </div>
+                    <p class="history-message">{{ entry.message }}</p>
+                    {% if entry.detail_lines %}
+                      <ul class="history-details">
+                        {% for line in entry.detail_lines %}
+                          <li>{{ line }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% endif %}
+                  </article>
+                {% endfor %}
+              </div>
+            </details>
+          {% endif %}
+        </div>
       {% else %}
         <p>No audit entries yet.</p>
       {% endif %}
+    </article>
+
+    <article class="panel">
+      <h3>QR code</h3>
+      <div class="qr-card qr-card-stacked">
+        <a class="qr-download-link" href="{{ qr_svg_url }}" target="_blank" rel="noreferrer">
+          <img class="qr-image" src="{{ qr_svg_url }}" alt="QR code for {{ item.service_tag }}">
+        </a>
+        <div class="qr-copy">
+          <p class="lead compact">
+            Scan or print this code to open this item through the configured base URL. Download it in either SVG or PNG depending on how you want to print or reuse it.
+          </p>
+          <p><strong>Target URL:</strong><br><code>{{ item_detail_url }}</code></p>
+          <div class="form-actions">
+            <a
+              class="button button-secondary"
+              href="{{ qr_svg_url }}"
+              download="{{ item.service_tag|lower }}-qr.svg"
+            >
+              Download SVG
+            </a>
+            <a
+              class="button button-secondary"
+              href="{{ qr_png_url }}"
+              download="{{ item.service_tag|lower }}-qr.png"
+            >
+              Download PNG
+            </a>
+          </div>
+        </div>
+      </div>
     </article>
   </section>
 {% endblock %}
