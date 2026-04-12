@@ -1,6 +1,7 @@
 from lendbase import create_app
 from lendbase.config import TestingConfig as AppTestingConfig
 from lendbase.db import get_engine, resolve_database_url
+from lendbase.qr import make_qr_svg
 
 
 def test_homepage_requires_authentication():
@@ -47,3 +48,10 @@ def test_legacy_instance_relative_sqlite_database_url_is_resolved_from_project_r
     resolved = resolve_database_url("sqlite:///instance/lendbase-dev.db", str(instance_path))
 
     assert resolved == f"sqlite:///{tmp_path.as_posix()}/instance/lendbase-dev.db"
+
+
+def test_make_qr_svg_returns_svg_content():
+    svg = make_qr_svg("http://localhost/items/1")
+
+    assert svg.startswith("<?xml")
+    assert "<svg" in svg

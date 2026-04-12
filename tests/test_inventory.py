@@ -142,6 +142,32 @@ def test_item_export_returns_csv_for_filtered_items():
     assert b"ST-CSV-1" not in response.data
 
 
+def test_item_detail_shows_qr_target_url_and_svg_route():
+    app = create_test_app()
+
+    with app.app_context():
+        item = Item(
+            item_type="Laptop",
+            service_tag="ST-QR",
+            hu_number="HU-QR",
+            status=ItemStatus.IN_STORAGE,
+        )
+        db_session.add(item)
+        db_session.commit()
+        item_id = item.id
+
+    with app.test_client() as client:
+        login(client)
+        detail_response = client.get(f"/items/{item_id}")
+        qr_response = client.get(f"/items/{item_id}/qr.svg")
+
+    assert detail_response.status_code == 200
+    assert b"http://localhost/items/" in detail_response.data
+    assert qr_response.status_code == 200
+    assert qr_response.mimetype == "image/svg+xml"
+    assert b"<svg" in qr_response.data
+
+
 def test_create_item_flow():
     app = create_test_app()
 

@@ -21,6 +21,7 @@ Schema extension guidance lives in
 - Lending and return workflow with borrower/date tracking
 - Search, filtering, lent-out view, and CSV export
 - Clearer audit history with change details on the item page
+- Item-level QR code generation using the configured app base URL
 - Pytest coverage for app startup
 - GitHub Actions CI and pre-commit configuration
 
@@ -191,12 +192,15 @@ GitHub Actions also runs:
 12. Confirm the audit history shows the lend event and the status change.
 13. Register the item return and confirm its status changes back to `in storage`.
 14. Confirm the audit history shows the return event and the status change.
-15. Delete an item from the detail page and confirm it disappears from `/items`.
-16. Log out and verify `/items` redirects to `/login`.
-17. Run the password reset command and confirm you can log in with the new password.
-18. Open `/health` and confirm it returns JSON with status `ok`.
-19. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
-20. Change `.env` values and restart the app to confirm configuration is picked up.
+15. Open the item detail page QR section and confirm the QR image renders.
+16. Open the QR SVG directly and confirm it loads.
+17. Check that the displayed QR target URL matches `LENDBASE_APP_BASE_URL`.
+18. Delete an item from the detail page and confirm it disappears from `/items`.
+19. Log out and verify `/items` redirects to `/login`.
+20. Run the password reset command and confirm you can log in with the new password.
+21. Open `/health` and confirm it returns JSON with status `ok`.
+22. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+23. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
 
@@ -237,7 +241,17 @@ Lending is now handled directly in the app by storing:
 
 ## QR codes
 
-QR generation is not implemented in this branch yet.
+QR generation is implemented on each item detail page.
 
-The scaffold already includes `LENDBASE_APP_BASE_URL` so later QR code generation can
-resolve stable item URLs in local development and in institutional deployments.
+The QR target URL is built from:
+
+- `LENDBASE_APP_BASE_URL`
+- the item detail path
+
+In local development, this usually means:
+
+- QR target like `http://127.0.0.1:5000/items/123`
+- scan leads to login first if no authenticated session exists
+
+Before a real deployment, set `LENDBASE_APP_BASE_URL` to the final internal hostname so
+printed codes resolve to the institution-facing URL.

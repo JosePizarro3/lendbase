@@ -348,6 +348,28 @@ body {
   padding: 0.5rem 0;
 }
 
+.qr-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.qr-image {
+  width: 180px;
+  height: 180px;
+  padding: 0.75rem;
+  border: 1px solid rgba(216, 205, 180, 0.8);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.qr-copy code {
+  display: inline-block;
+  max-width: 100%;
+  word-break: break-all;
+}
+
 .history-stack {
   display: grid;
   gap: 0.9rem;
@@ -444,6 +466,10 @@ code {
   .detail-grid,
   .form-grid,
   .detail-list {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-card {
     grid-template-columns: 1fr;
   }
 }

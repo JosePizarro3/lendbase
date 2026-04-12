@@ -4,12 +4,23 @@ import csv
 from datetime import date
 from io import StringIO
 
-from flask import Blueprint, Response, abort, flash, redirect, render_template, request, url_for
+from flask import (
+    Blueprint,
+    Response,
+    abort,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 from sqlalchemy import and_, or_, select
 
 from lendbase.auth import login_required
 from lendbase.db import db_session
 from lendbase.models import AuditEventType, AuditLogEntry, Item, ItemStatus, LendingRecord
+from lendbase.qr import make_qr_svg
 
 inventory = Blueprint("inventory", __name__)
 
@@ -312,6 +323,12 @@ def export_items_csv(items: list[Item]) -> Response:
     )
 
 
+def build_item_detail_url(item: Item) -> str:
+    return (
+        f"{current_app.config['APP_BASE_URL']}{url_for('inventory.item_detail', item_id=item.id)}"
+    )
+
+
 @inventory.get("/items")
 @login_required
 def item_list():
@@ -388,11 +405,21 @@ def item_detail(item_id: int):
     return render_template(
         "inventory/detail.html",
         item=item,
+        item_detail_url=build_item_detail_url(item),
+        qr_svg_url=url_for("inventory.item_qr_svg", item_id=item.id),
         active_lending_record=get_active_lending_record(item),
         lending_form_data=build_lending_form_data({}),
         return_form_data=build_return_form_data({}),
         audit_history_entries=build_audit_history_entries(item),
     )
+
+
+@inventory.get("/items/<int:item_id>/qr.svg")
+@login_required
+def item_qr_svg(item_id: int):
+    item = get_item_or_404(item_id)
+    svg = make_qr_svg(build_item_detail_url(item))
+    return Response(svg, mimetype="image/svg+xml")
 
 
 @inventory.route("/items/<int:item_id>/edit", methods=["GET", "POST"])
