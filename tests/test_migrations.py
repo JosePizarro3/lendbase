@@ -23,6 +23,7 @@ def test_alembic_upgrade_creates_expected_tables(tmp_path):
 
     assert set(inspector.get_table_names()) >= {
         "alembic_version",
+        "admin_users",
         "items",
         "lending_records",
         "audit_log_entries",

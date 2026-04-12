@@ -22,9 +22,7 @@ class Base(DeclarativeBase):
     metadata = metadata
 
 
-db_session = scoped_session(
-    sessionmaker(autoflush=False, autocommit=False, expire_on_commit=False)
-)
+db_session = scoped_session(sessionmaker(autoflush=False, autocommit=False, expire_on_commit=False))
 
 
 def resolve_database_url(database_url: str, instance_path: str) -> str:

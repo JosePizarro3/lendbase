@@ -5,11 +5,11 @@
 {% block content %}
   <section class="hero">
     <div>
-      <p class="eyebrow">Step 2 database foundation</p>
+      <p class="eyebrow">Step 3 authentication foundation</p>
       <h2>Internal inventory management for a small university admin team</h2>
       <p class="lead">
-        The app now includes the initial SQLAlchemy schema and Alembic migration
-        setup for inventory items, lending records, and audit history.
+        The app now protects the internal interface with a shared admin login,
+        secure password hashing, and a first-run bootstrap flow.
       </p>
     </div>
     <dl class="summary-card">
@@ -25,27 +25,29 @@
         <dt>Base URL</dt>
         <dd>{{ app_base_url }}</dd>
       </div>
+      <div>
+        <dt>Signed in as</dt>
+        <dd>{{ admin_username }}</dd>
+      </div>
     </dl>
   </section>
 
   <section class="panel">
     <h3>What is included in this branch</h3>
     <ul>
-      <li>Python project metadata and installable package layout</li>
-      <li>Config separation for development, testing, and production</li>
-      <li>Database URL handling with local SQLite support under the Flask instance directory</li>
-      <li>Initial models for items, lending records, and audit history</li>
-      <li>Alembic migration setup and the first schema revision</li>
-      <li>Health check endpoint at <code>/health</code></li>
-      <li>Initial developer documentation for setup, run, test, and debugging</li>
+      <li>Shared admin authentication for the browser UI</li>
+      <li>Secure password hashing using Werkzeug</li>
+      <li>One-time bootstrap route for creating the first admin account</li>
+      <li>Session-based route protection for internal app pages</li>
+      <li>Documentation and tests for login, logout, and bootstrap behavior</li>
     </ul>
   </section>
 
   <section class="panel">
     <h3>What comes next</h3>
     <p>
-      The next branch adds shared-admin authentication with secure password hashing
-      and a simple session-based login flow.
+      The next branch connects the inventory schema to actual item CRUD pages so the
+      application becomes meaningfully interactive in the browser.
     </p>
   </section>
 {% endblock %}

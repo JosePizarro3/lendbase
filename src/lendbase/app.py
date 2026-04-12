@@ -5,6 +5,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from flask import Flask
 
+from lendbase.auth import auth
 from lendbase.config import BaseConfig, get_config
 from lendbase.db import init_db
 from lendbase.web import web
@@ -25,6 +26,7 @@ def create_app(config: BaseConfig | None = None) -> Flask:
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
     init_db(app)
+    app.register_blueprint(auth)
     app.register_blueprint(web)
 
     return app
