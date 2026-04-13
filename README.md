@@ -36,21 +36,39 @@ examples below use `uv` in Windows.
 
 ## Local setup
 
-1. Create a virtual environment:
+1. Create a virtual environment on either platform:
+
+   Windows (`cmd`):
 
    ```cmd
    python -m venv .venv
    ```
 
+   Ubuntu (`bash`):
+
+   ```bash
+   python3 -m venv .venv
+   ```
+
 2. Activate it:
+
+   Windows (`cmd`):
 
    ```cmd
    .\.venv\Scripts\activate
    ```
 
+   Ubuntu (`bash`):
+
+   ```bash
+   source .venv/bin/activate
+   ```
+
 3. Install dependencies:
 
-   ```cmd
+   Windows (`cmd`) or Ubuntu (`bash`):
+
+   ```text
    uv sync --extra dev
    ```
 
@@ -64,8 +82,17 @@ Current environment variables:
 - `LENDBASE_APP_BASE_URL`: base URL used later for links and QR generation
 
 Example local `.env` values are provided in [.env.example](.env.example). You can simply create a local environment file by doing:
+
+Windows (`cmd`):
+
 ```cmd
 copy .env.example .env
+```
+
+Ubuntu (`bash`):
+
+```bash
+cp .env.example .env
 ```
 
 ## Initialize the database
@@ -82,8 +109,17 @@ For the default SQLite setup, the database file is created under the project dir
 
 Use the Flask development server:
 
+Windows (`cmd`):
+
 ```cmd
 set FLASK_APP=lendbase.app:create_app
+python -m flask --debug run
+```
+
+Ubuntu (`bash`):
+
+```bash
+export FLASK_APP=lendbase.app:create_app
 python -m flask --debug run
 ```
 
@@ -170,7 +206,7 @@ GitHub Actions also runs:
 20. Log out and verify `/items` redirects to `/login`.
 21. Run the password reset command and confirm you can log in with the new password.
 22. Open `/health` and confirm it returns JSON with status `ok`.
-23. Confirm the SQLite database file exists in `instance\lendbase-dev.db`.
+23. Confirm the SQLite database file exists in `instance\lendbase-dev.db` on Windows or `instance/lendbase-dev.db` on Ubuntu.
 24. Change `.env` values and restart the app to confirm configuration is picked up.
 
 ## Debugging tips
