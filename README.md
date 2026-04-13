@@ -94,7 +94,7 @@ Then open:
 
 ## Login
 
-Authentication is implemented as a simple shared-admin flow. 
+Authentication is implemented as a simple shared-admin flow.
 
 First-time setup:
 
