@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}lendbase | Home{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Home</p>
+      <h2>University equipment inventory</h2>
+      <p class="lead">
+        Use this internal tool to keep track of equipment, lending activity, and item history
+        in one place. Start from the item list to add records, search existing equipment, or
+        register a loan or return.
+      </p>
+      <div class="form-actions">
+        <a class="button" href="{{ url_for('inventory.item_list') }}">Open items</a>
+        <a class="button button-secondary" href="{{ url_for('inventory.item_create') }}">Add item</a>
+      </div>
+    </div>
+    <dl class="summary-card">
+      <div>
+        <dt>Signed in as</dt>
+        <dd>{{ admin_username }}</dd>
+      </div>
+      <div>
+        <dt>Environment</dt>
+        <dd>{{ environment }}</dd>
+      </div>
+      <div>
+        <dt>Base URL</dt>
+        <dd>{{ app_base_url }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="stats-grid">
+    <article class="stat-card">
+      <span class="stat-label">Total items</span>
+      <strong class="stat-value">{{ summary.total_items }}</strong>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Currently lent out</span>
+      <strong class="stat-value">{{ summary.lent_out_items }}</strong>
+    </article>
+    <article class="stat-card">
+      <span class="stat-label">Broken, lost, or under repair</span>
+      <strong class="stat-value">{{ summary.attention_items }}</strong>
+    </article>
+  </section>
+
+  <section class="detail-grid">
+    <article class="panel">
+      <h3>Start here</h3>
+      <ul class="simple-list">
+        <li>Open the item list to search, filter, and export inventory data.</li>
+        <li>Create a new item when equipment arrives or needs to be added manually.</li>
+        <li>Use the item detail page to lend, return, edit, or print QR codes.</li>
+      </ul>
+    </article>
+
+    <article class="panel">
+      <h3>What this app stores</h3>
+      <ul class="simple-list">
+        <li>Core metadata such as service tag, HU number, item type, and status.</li>
+        <li>Lending records with borrower name, lend date, return date, and comments.</li>
+        <li>An audit trail for item creation, edits, status changes, lending, and returns.</li>
+      </ul>
+    </article>
+  </section>
+{% endblock %}

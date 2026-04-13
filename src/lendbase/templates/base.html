@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}lendbase{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="shell">
+        <div class="site-header-row">
+          <div>
+            <p class="eyebrow">HU Berlin internal tool</p>
+            <h1>lendbase</h1>
+          </div>
+          <nav class="site-nav">
+            {% if g.admin_user %}
+              <a class="button button-secondary" href="{{ url_for('web.home') }}">Home</a>
+              <a class="button button-secondary" href="{{ url_for('inventory.item_list') }}">Items</a>
+              <span class="nav-user">Signed in as {{ g.admin_user.username }}</span>
+              <form action="{{ url_for('auth.logout') }}" method="post">
+                <button class="button button-secondary" type="submit">Log out</button>
+              </form>
+            {% else %}
+              <a class="button button-secondary" href="{{ url_for('auth.login') }}">Log in</a>
+            {% endif %}
+          </nav>
+        </div>
+      </div>
+    </header>
+    <main class="shell">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <section class="flash-stack">
+            {% for category, message in messages %}
+              <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </section>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>
