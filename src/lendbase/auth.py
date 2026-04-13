@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import wraps
+from urllib.parse import urlsplit
 
 import click
 from flask import (
@@ -40,6 +41,19 @@ def get_current_admin() -> AdminUser | None:
     if admin_id is None:
         return None
     return db_session.get(AdminUser, admin_id)
+
+
+def get_safe_redirect_target(target: str | None) -> str:
+    if not target:
+        return url_for("web.home")
+
+    parsed = urlsplit(target)
+    if parsed.scheme or parsed.netloc:
+        return url_for("web.home")
+    if not target.startswith("/"):
+        return url_for("web.home")
+
+    return target
 
 
 def login_required(view):
@@ -82,7 +96,7 @@ def login_post():
     session.clear()
     session["admin_user_id"] = admin_user.id
     flash("Logged in successfully.", "success")
-    next_url = request.args.get("next") or url_for("web.home")
+    next_url = get_safe_redirect_target(request.args.get("next"))
     return redirect(next_url)
 
 

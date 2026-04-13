@@ -42,6 +42,5 @@ def health():
         {
             "status": "ok",
             "app": current_app.config["APP_NAME"],
-            "database_url": current_app.config["DATABASE_URL_RESOLVED"],
         }
     )

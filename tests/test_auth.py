@@ -79,6 +79,44 @@ def test_login_and_logout_flow_after_bootstrap():
         assert b"Logged out." in logout_response.data
 
 
+def test_login_ignores_external_next_redirect():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add(
+            AdminUser(username="admin", password_hash=generate_password_hash("very-secure-pass"))
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        response = client.post(
+            "/login?next=https://evil.example/phish",
+            data={"username": "admin", "password": "very-secure-pass"},
+        )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/")
+
+
+def test_login_allows_local_next_redirect():
+    app = create_test_app()
+
+    with app.app_context():
+        db_session.add(
+            AdminUser(username="admin", password_hash=generate_password_hash("very-secure-pass"))
+        )
+        db_session.commit()
+
+    with app.test_client() as client:
+        response = client.post(
+            "/login?next=/items",
+            data={"username": "admin", "password": "very-secure-pass"},
+        )
+
+    assert response.status_code == 302
+    assert response.headers["Location"].endswith("/items")
+
+
 def test_setup_admin_is_disabled_after_first_admin_exists():
     app = create_test_app()
 

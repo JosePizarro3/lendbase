@@ -1,15 +1,27 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+
+def get_secret_key() -> str:
+    return os.getenv("LENDBASE_SECRET_KEY", "dev-only-change-me")
+
+
+def get_database_url() -> str:
+    return os.getenv("LENDBASE_DATABASE_URL", "sqlite:///lendbase-dev.db")
+
+
+def get_app_base_url() -> str:
+    return os.getenv("LENDBASE_APP_BASE_URL", "http://127.0.0.1:5000")
 
 
 @dataclass(slots=True)
 class BaseConfig:
     app_name: str = "lendbase"
-    secret_key: str = os.getenv("LENDBASE_SECRET_KEY", "dev-only-change-me")
-    database_url: str = os.getenv("LENDBASE_DATABASE_URL", "sqlite:///lendbase-dev.db")
-    app_base_url: str = os.getenv("LENDBASE_APP_BASE_URL", "http://127.0.0.1:5000")
+    secret_key: str = field(default_factory=get_secret_key)
+    database_url: str = field(default_factory=get_database_url)
+    app_base_url: str = field(default_factory=get_app_base_url)
     session_cookie_secure: bool = False
     testing: bool = False
 

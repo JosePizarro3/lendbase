@@ -1,5 +1,12 @@
+from unittest.mock import patch
+
 from lendbase import create_app
-from lendbase.config import TestingConfig as AppTestingConfig
+from lendbase.config import (
+    TestingConfig as AppTestingConfig,
+    get_app_base_url,
+    get_database_url,
+    get_secret_key,
+)
 from lendbase.db import get_engine, resolve_database_url
 from lendbase.qr import make_qr_png, make_qr_svg
 
@@ -24,8 +31,22 @@ def test_health_endpoint_returns_ok_status():
     assert response.json == {
         "status": "ok",
         "app": "lendbase",
-        "database_url": "sqlite:///:memory:",
     }
+
+
+def test_config_uses_environment_values_at_instantiation_time():
+    with patch.dict(
+        "os.environ",
+        {
+            "LENDBASE_SECRET_KEY": "runtime-secret",
+            "LENDBASE_DATABASE_URL": "sqlite:///runtime.db",
+            "LENDBASE_APP_BASE_URL": "https://inventory.example.edu",
+        },
+        clear=False,
+    ):
+        assert get_secret_key() == "runtime-secret"
+        assert get_database_url() == "sqlite:///runtime.db"
+        assert get_app_base_url() == "https://inventory.example.edu"
 
 
 def test_database_engine_is_initialized():
